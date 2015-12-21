@@ -6,3 +6,4 @@ tmp/
 src/scratch.cpp
 
 *.swp
+\#*#
