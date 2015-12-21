@@ -8,3 +8,5 @@ sites where:
 * Africans in 1000 Genomes Project data are fixed for a certain allele
 * Altai Neanderthal or Denisovan individuals are homozygous for an
   allele that is different from the one seen in Africans
+
+Usage: run `make` and follow the instructions.
