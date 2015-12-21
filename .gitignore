@@ -1,0 +1,8 @@
+bin/
+lib/
+output_bed/
+output_vcf/
+tmp/
+src/scratch.cpp
+
+*.swp
