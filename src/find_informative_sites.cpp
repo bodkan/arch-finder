@@ -182,6 +182,41 @@ check_archaic_states(const std::string& vcf_filename,
     return result;
 }
 
+//
+// Get a set of sites which at which Altai and Denisovan and Africans
+// all differ from each other (i.e. triallelic sites that haven't been
+// detected earlier by pairwise comparisons).
+//
+std::set<int>
+get_triallelic_positions(std::map<int, std::pair<char, char>> & altai,
+                         std::map<int, std::pair<char, char>> & denisovan)
+{
+    std::set<int> triallelic_positions;
+
+    // iterate through all informative sites from Altai...
+    for (auto & altai_site : altai) {
+      int pos = altai_site.first;
+      char altai_allele = altai_site.second.second;
+      // ... and check if Denisovan (if also carries an informative allele)
+      // has the same allele as Altai
+      if ((denisovan.count(pos) > 0) && (altai_allele != denisovan[pos].second))
+          triallelic_positions.insert(pos);
+    }
+
+    return triallelic_positions;
+}
+
+//
+// Filter out sites that are known not to be truly biallelic.
+//
+void
+filter_out_triallelic(std::map<int, std::pair<char, char>> & sites,
+                      std::set<int> & positions_to_remove)
+{
+    for (int pos : positions_to_remove)
+        if (sites.count(pos)) sites.erase(pos);
+}
+
 int
 main(int argc, char** argv)
 {
@@ -210,31 +245,22 @@ main(int argc, char** argv)
     denisovan = check_archaic_states(denisovan_vcf_file, 0, fixed_sites);
     std::clog << "[Chromosome " << chr << "] Analysis of the Denisovan VCF file DONE (" << denisovan.size() << " sites)!\n";
 
-    // get a set of sites which at which Altai and Denisovan and Africans
-    // all differ from each other (i.e. triallelic sites that haven't been
-    // detected by pairwise comparisons above)
-    std::set<int> sites_to_keep;
-    for (auto & altai_site : altai) {
-      int position = altai_site.first;
-      char altai_allele = altai_site.second.second;
-      if ((denisovan.count(position) > 0) && (altai_allele == denisovan[position].second))
-        sites_to_keep.insert(altai_site.first);
-    }
+    // get a set of sites at which Altai, Denisovan and Africans
+    // all differ from each other
+    std::set<int> positions_to_remove = get_triallelic_positions(altai, denisovan);
+
+    // remove such triallelic sites
+    filter_out_triallelic(altai, positions_to_remove);
+    filter_out_triallelic(denisovan, positions_to_remove);
 
     // initialize the table of final results
     std::map<int, std::tuple<char, char, bool, bool, bool, bool>> table;
-    for (auto & site : altai) {
-        int pos = site.first;
-        if (sites_to_keep.count(pos)) table.emplace(pos, std::make_tuple(site.second.first, site.second.second, false, false, false, false));
-    }
-    for (auto & site : denisovan) {
-        int pos = site.first;
-        if (sites_to_keep.count(pos)) table.emplace(pos, std::make_tuple(site.second.first, site.second.second, false, false, false, false));
-    }
+    for (auto & site : altai) table.emplace(site.first, std::make_tuple(site.second.first, site.second.second, false, false, false, false));
+    for (auto & site : denisovan) table.emplace(site.first, std::make_tuple(site.second.first, site.second.second, false, false, false, false));
 
     // set boolean-flag at positions where an archaic differs from Africans
-    for (auto & site : altai)     if (sites_to_keep.count(site.first)) std::get<2>(table[site.first]) = true;
-    for (auto & site : denisovan) if (sites_to_keep.count(site.first)) std::get<3>(table[site.first]) = true;
+    for (auto & site : altai)     std::get<2>(table[site.first]) = true;
+    for (auto & site : denisovan) std::get<3>(table[site.first]) = true;
 
     std::clog << "[Chromosome " << chr << "] Printing out the results.\n";
     // print out the final table in a BED-like format
