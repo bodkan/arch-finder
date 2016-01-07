@@ -135,7 +135,7 @@ find_matching_variant(VcfFileReader& vcf,
 // Get a vector of coordinates where a given archaic differs from Africans
 // at sites where all Africans are fixed.
 //
-std::vector<std::tuple<int, char, char>>
+std::map<int, std::pair<char, char>>
 check_archaic_states(const std::string& vcf_filename,
                      const short sample_id,
                      const std::vector<std::tuple<int, char, char>>& afr_fixed_sites)
@@ -146,7 +146,7 @@ check_archaic_states(const std::string& vcf_filename,
     vcf.open(vcf_filename.c_str(), header);
 
     // a vector where all valid positions will be accumulated
-    std::vector<std::tuple<int, char, char>> result;
+    std::map<int, std::pair<char, char>> result;
 
     bool skip_reading = false;
     // go through all positions which carry alleles fixed in Africans and look
@@ -171,8 +171,7 @@ check_archaic_states(const std::string& vcf_filename,
                     && (*rec.getAlleles(rec.getGT(sample_id, 0)) != afr_allele)
                     && (*rec.getAlleles(rec.getGT(sample_id, 0)) == other_allele)) {
                 // add this position to the final list of sites
-                result.push_back(std::make_tuple(
-                    afr_pos,
+                result.emplace(afr_pos, std::make_pair(
                     afr_allele,
                     *rec.getAlleles(rec.getGT(sample_id, 0)))
                 );
@@ -201,7 +200,7 @@ main(int argc, char** argv)
     std::vector<std::tuple<int, char, char>> fixed_sites = get_fixed_afr_sites(hg1k_vcf_file, "tmp/afr_samples.list");
     std::clog << "[Chromosome " << chr << "] Analysis of the 1000 genomes VCF file DONE (" << fixed_sites.size() << " sites)!\n";
 
-    std::vector<std::tuple<int, char, char>> altai, denisovan;
+    std::map<int, std::pair<char, char>> altai, denisovan;
 
     std::clog << "[Chromosome " << chr << "] Started scanning the Altai VCF file.\n";
     altai = check_archaic_states(altai_vcf_file, 0, fixed_sites);
@@ -211,14 +210,31 @@ main(int argc, char** argv)
     denisovan = check_archaic_states(denisovan_vcf_file, 0, fixed_sites);
     std::clog << "[Chromosome " << chr << "] Analysis of the Denisovan VCF file DONE (" << denisovan.size() << " sites)!\n";
 
+    // get a set of sites which at which Altai and Denisovan and Africans
+    // all differ from each other (i.e. triallelic sites that haven't been
+    // detected by pairwise comparisons above)
+    std::set<int> sites_to_keep;
+    for (auto & altai_site : altai) {
+      int position = altai_site.first;
+      char altai_allele = altai_site.second.second;
+      if ((denisovan.count(position) > 0) && (altai_allele == denisovan[position].second))
+        sites_to_keep.insert(altai_site.first);
+    }
+
     // initialize the table of final results
     std::map<int, std::tuple<char, char, bool, bool, bool, bool>> table;
-    for (auto & site : altai)     table.emplace(std::get<0>(site), std::make_tuple(std::get<1>(site), std::get<2>(site), false, false, false, false));
-    for (auto & site : denisovan) table.emplace(std::get<0>(site), std::make_tuple(std::get<1>(site), std::get<2>(site), false, false, false, false));
+    for (auto & site : altai) {
+        int pos = site.first;
+        if (sites_to_keep.count(pos)) table.emplace(pos, std::make_tuple(site.second.first, site.second.second, false, false, false, false));
+    }
+    for (auto & site : denisovan) {
+        int pos = site.first;
+        if (sites_to_keep.count(pos)) table.emplace(pos, std::make_tuple(site.second.first, site.second.second, false, false, false, false));
+    }
 
     // set boolean-flag at positions where an archaic differs from Africans
-    for (auto & site : altai)     std::get<2>(table[std::get<0>(site)]) = true;
-    for (auto & site : denisovan) std::get<3>(table[std::get<0>(site)]) = true;
+    for (auto & site : altai)     if (sites_to_keep.count(site.first)) std::get<2>(table[site.first]) = true;
+    for (auto & site : denisovan) if (sites_to_keep.count(site.first)) std::get<3>(table[site.first]) = true;
 
     std::clog << "[Chromosome " << chr << "] Printing out the results.\n";
     // print out the final table in a BED-like format
