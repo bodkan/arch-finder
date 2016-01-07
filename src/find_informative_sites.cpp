@@ -4,22 +4,6 @@
 #include "VcfFileReader.h"
 
 //
-// Check that a given variant is not fixed in the global population.
-//
-bool
-polymorphic_outside_africa(VcfRecord& rec)
-{
-    double amr_freq = std::stod(*(rec.getInfo().getString("AMR_AF")));
-    double eas_freq = std::stod(*(rec.getInfo().getString("EAS_AF")));
-    double eur_freq = std::stod(*(rec.getInfo().getString("EUR_AF")));
-    double sas_freq = std::stod(*(rec.getInfo().getString("SAS_AF")));
-    return ((0 < amr_freq && amr_freq < 1.0)
-              || (0 < eas_freq && eas_freq < 1.0)
-              || (0 < eur_freq && eur_freq < 1.0)
-              || (0 < sas_freq && sas_freq < 1.0));
-}
-
-//
 // Check if Africans share the same genotype at this site.
 //
 bool
@@ -57,7 +41,7 @@ has_simple_allele(VcfRecord& rec)
 // Get a vector of positions where all Africans are fixed together with their
 // allele states at these positions.
 //
-std::vector<std::tuple<int, char, char>>
+std::vector<std::pair<int, char>>
 get_fixed_afr_sites(const std::string& hg1k_filename, const char* afr_list)
 {
     VcfHeader hg1k_header;
@@ -66,27 +50,22 @@ get_fixed_afr_sites(const std::string& hg1k_filename, const char* afr_list)
 
     hg1k_vcf.open(hg1k_filename.c_str(), hg1k_header, afr_list, NULL, NULL);
 
-    std::vector<std::tuple<int, char, char>> fixed_sites;
+    std::vector<std::pair<int, char>> fixed_sites;
     while (hg1k_vcf.readRecord(hg1k_rec)) {
         // consider only alleles which
         //   * are biallelic SNPs
         //   * are fixed in all Africans,
-        //   * are not fixed outside Africa
         if (has_simple_allele(hg1k_rec)
-                && fixed_in_africa(hg1k_rec)
-                && polymorphic_outside_africa(hg1k_rec)) {
+                && fixed_in_africa(hg1k_rec)) {
             int pos = hg1k_rec.get1BasedPosition();
 
-            // get African allele index and index of alternative allele
-            // (0 - REF; 1 - ALT)
+            // get index of an African allele
             short afr_allele_index = hg1k_rec.getGT(0, 0);
-            short other_allele_index = afr_allele_index == 0 ? 1 : 0;
 
             // get alleles of an African genotype and an alternative allele
             char afr_allele = *hg1k_rec.getAlleles(afr_allele_index);
-            char other_allele = *hg1k_rec.getAlleles(other_allele_index);
 
-            fixed_sites.push_back(std::make_tuple(pos, afr_allele, other_allele));
+            fixed_sites.push_back(std::make_pair(pos, afr_allele));
         }
     }
 
@@ -138,7 +117,7 @@ find_matching_variant(VcfFileReader& vcf,
 std::map<int, std::pair<char, char>>
 check_archaic_states(const std::string& vcf_filename,
                      const short sample_id,
-                     const std::vector<std::tuple<int, char, char>>& afr_fixed_sites)
+                     const std::vector<std::pair<int, char>>& afr_fixed_sites)
 {
     VcfHeader header;
     VcfFileReader vcf;
@@ -153,9 +132,8 @@ check_archaic_states(const std::string& vcf_filename,
     // for matching records in a given VCF file
     for (auto& afr_site : afr_fixed_sites) {
 
-        int afr_pos = std::get<0>(afr_site);
-        char afr_allele = std::get<1>(afr_site);
-        char other_allele = std::get<2>(afr_site);
+        int afr_pos = afr_site.first;
+        char afr_allele = afr_site.second;
 
         if (find_matching_variant(vcf, rec, afr_pos, skip_reading)) {
             // to include this variant for further analysis, archaic
@@ -163,13 +141,11 @@ check_archaic_states(const std::string& vcf_filename,
             //   * has to be homozygous at this site,
             //   * can't have a missing genotype,
             //   * must be different than all Africans
-            //   * must carry the same allele as ALT seen in 1000 genomes data
 	        if (((rec.getNumAlts() == 0) || (rec.getNumAlts() == 1))
                     && has_simple_allele(rec)
                     && (rec.getGT(sample_id, 0) == rec.getGT(sample_id, 1))
                     && (rec.getGT(sample_id, 0) != VcfGenotypeSample::MISSING_GT)
-                    && (*rec.getAlleles(rec.getGT(sample_id, 0)) != afr_allele)
-                    && (*rec.getAlleles(rec.getGT(sample_id, 0)) == other_allele)) {
+                    && (*rec.getAlleles(rec.getGT(sample_id, 0)) != afr_allele)) {
                 // add this position to the final list of sites
                 result.emplace(afr_pos, std::make_pair(
                     afr_allele,
@@ -232,7 +208,7 @@ main(int argc, char** argv)
     std::string denisovan_vcf_file(argv[4]);
 
     std::clog << "[Chromosome " << chr << "] Started scanning the 1000 genomes VCF file.\n";
-    std::vector<std::tuple<int, char, char>> fixed_sites = get_fixed_afr_sites(hg1k_vcf_file, "tmp/afr_samples.list");
+    std::vector<std::pair<int, char>> fixed_sites = get_fixed_afr_sites(hg1k_vcf_file, "tmp/afr_samples.list");
     std::clog << "[Chromosome " << chr << "] Analysis of the 1000 genomes VCF file DONE (" << fixed_sites.size() << " sites)!\n";
 
     std::map<int, std::pair<char, char>> altai, denisovan;
