@@ -221,19 +221,16 @@ main(int argc, char** argv)
 
     float afr_freq_cutoff = std::atof(argv[5]);
 
-    std::clog << "[Chromosome " << chr << "] Started scanning the 1000 genomes VCF file.\n";
     std::vector<std::pair<int, char>> fixed_sites = get_high_freq_afr_sites(hg1k_vcf_file, "tmp/afr_samples.list", afr_freq_cutoff);
-    std::clog << "[Chromosome " << chr << "] Analysis of the 1000 genomes VCF file DONE (" << fixed_sites.size() << " sites)!\n";
+    std::clog << "[Chromosome " << chr << "] Analysis of the 1000 genomes VCF file done (" << fixed_sites.size() << " sites)\n";
 
     std::map<int, std::pair<char, char>> altai, denisovan;
 
-    std::clog << "[Chromosome " << chr << "] Started scanning the Altai VCF file.\n";
     altai = check_archaic_states(altai_vcf_file, 0, fixed_sites);
-    std::clog << "[Chromosome " << chr << "] Analysis of the Altai VCF file DONE (" << altai.size() << " sites)!\n";
+    std::clog << "[Chromosome " << chr << "] Analysis of the Altai VCF file done (" << altai.size() << " sites)\n";
 
-    std::clog << "[Chromosome " << chr << "] Started scanning the Denisovan VCF file.\n";
     denisovan = check_archaic_states(denisovan_vcf_file, 0, fixed_sites);
-    std::clog << "[Chromosome " << chr << "] Analysis of the Denisovan VCF file DONE (" << denisovan.size() << " sites)!\n";
+    std::clog << "[Chromosome " << chr << "] Analysis of the Denisovan VCF file done (" << denisovan.size() << " sites)\n";
 
     // get a set of sites at which Altai, Denisovan and Africans
     // all differ from each other
@@ -252,7 +249,6 @@ main(int argc, char** argv)
     for (auto & site : altai)     std::get<2>(table[site.first]) = true;
     for (auto & site : denisovan) std::get<3>(table[site.first]) = true;
 
-    std::clog << "[Chromosome " << chr << "] Printing out the results.\n";
     // print out the final table in a BED-like format
     for (auto & site : table) {
         std::cout << chr << "\t" << site.first - 1 << "\t" << site.first << "\t"
@@ -261,8 +257,8 @@ main(int argc, char** argv)
             << std::get<2>(site.second) << "\t"
             << std::get<3>(site.second) << "\n";
     }
-    std::clog << "[Chromosome " << chr << "] Printing out the results DONE " <<
-        "(" << table.size() << " sites in total)!\n";
+    std::clog << "[Chromosome " << chr << "] Printing out the results done " <<
+        "(" << table.size() << " sites in total)\n";
 
     return 0;
 }
