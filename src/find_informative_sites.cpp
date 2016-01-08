@@ -25,7 +25,7 @@ high_freq_in_africa(VcfRecord& hg1k_rec, float freq_cutoff)
         if (allele_2 == 0) ref_counter++;
     }
 
-    float ref_freq = ref_counter / (2 * n_africans);
+    float ref_freq = (float) ref_counter / (2 * n_africans);
 
     // if the REF/ALT allele is at high frequency, return true
     // and the value of this allele
