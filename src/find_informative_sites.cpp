@@ -4,26 +4,38 @@
 #include "VcfFileReader.h"
 
 //
-// Check if Africans share the same genotype at this site.
+// Check the frequency of the major African allele. If it is higher
+// than the specified frequency cutoff, return its value. 
 //
-bool
-fixed_in_africa(VcfRecord& rec)
+std::pair<bool, char>
+high_freq_in_africa(VcfRecord& hg1k_rec, float freq_cutoff)
 {
-    int afr_allele = rec.getGT(0, 0);
-
+    int ref_counter = 0;
+    int n_africans = hg1k_rec.getNumSamples();
+    
     // since only African samples were loaded from the VCF file previously,
-    // scan through all samples in the record and test if all of them are
-    // homozygous for the same allele
-    for (int i = 0; i < rec.getNumSamples(); i++) {
-        int allele_1 = rec.getGT(i, 0);
-        int allele_2 = rec.getGT(i, 1);
+    // scan through all samples and count the number of samples carrying
+    // the reference allele
+    for (int i = 0; i < n_africans; i++) {
+        // get indices (0/1) of alleles of the i-th sample
+        int allele_1 = hg1k_rec.getGT(i, 0);
+        int allele_2 = hg1k_rec.getGT(i, 1);
 
-        if (! ((allele_1 == afr_allele) &&
-               (allele_2 == afr_allele || allele_2 == VcfGenotypeSample::INVALID_GT)))
-            return false;
+        if (allele_1 == 0) ref_counter++;
+        if (allele_2 == 0) ref_counter++;
     }
 
-    return true;
+    float ref_freq = ref_counter / (2 * n_africans);
+
+    // if the REF/ALT allele is at high frequency, return true
+    // and the value of this allele
+    if (ref_freq >= freq_cutoff) {
+        return std::make_pair(true, *hg1k_rec.getAlleles(0));
+    } else if ((1 - ref_freq) >= freq_cutoff) {
+        return std::make_pair(true, *hg1k_rec.getAlleles(1));
+    } else {
+        return std::make_pair(false, -1);
+    }
 }
 
 //
@@ -42,7 +54,9 @@ has_simple_allele(VcfRecord& rec)
 // allele states at these positions.
 //
 std::vector<std::pair<int, char>>
-get_fixed_afr_sites(const std::string& hg1k_filename, const char* afr_list)
+get_high_freq_afr_sites(const std::string& hg1k_filename,
+                    const char* afr_list,
+                    float freq_cutoff)
 {
     VcfHeader hg1k_header;
     VcfFileReader hg1k_vcf;
@@ -52,20 +66,19 @@ get_fixed_afr_sites(const std::string& hg1k_filename, const char* afr_list)
 
     std::vector<std::pair<int, char>> fixed_sites;
     while (hg1k_vcf.readRecord(hg1k_rec)) {
+        bool freq_above_cutoff = false;
+        char major_afr_allele;
+
+        std::tie(freq_above_cutoff, major_afr_allele) = high_freq_in_africa(hg1k_rec, freq_cutoff);
+
         // consider only alleles which
         //   * are biallelic SNPs
-        //   * are fixed in all Africans,
-        if (has_simple_allele(hg1k_rec)
-                && fixed_in_africa(hg1k_rec)) {
-            int pos = hg1k_rec.get1BasedPosition();
-
-            // get index of an African allele
-            short afr_allele_index = hg1k_rec.getGT(0, 0);
-
-            // get alleles of an African genotype and an alternative allele
-            char afr_allele = *hg1k_rec.getAlleles(afr_allele_index);
-
-            fixed_sites.push_back(std::make_pair(pos, afr_allele));
+        //   * are above specified frequency in Africans
+        if (has_simple_allele(hg1k_rec) && freq_above_cutoff) {
+            fixed_sites.push_back(std::make_pair(
+                hg1k_rec.get1BasedPosition(),
+                major_afr_allele)
+            );
         }
     }
 
@@ -131,24 +144,23 @@ check_archaic_states(const std::string& vcf_filename,
     // go through all positions which carry alleles fixed in Africans and look
     // for matching records in a given VCF file
     for (auto& afr_site : afr_fixed_sites) {
+        int pos = afr_site.first;
+        char major_afr_allele = afr_site.second;
 
-        int afr_pos = afr_site.first;
-        char afr_allele = afr_site.second;
-
-        if (find_matching_variant(vcf, rec, afr_pos, skip_reading)) {
+        if (find_matching_variant(vcf, rec, pos, skip_reading)) {
             // to include this variant for further analysis, archaic
             //   * has to carry a valid allele (biallelic SNP),
             //   * has to be homozygous at this site,
             //   * can't have a missing genotype,
-            //   * must be different than all Africans
+            //   * must be different than majority of Africans
 	        if (((rec.getNumAlts() == 0) || (rec.getNumAlts() == 1))
                     && has_simple_allele(rec)
                     && (rec.getGT(sample_id, 0) == rec.getGT(sample_id, 1))
                     && (rec.getGT(sample_id, 0) != VcfGenotypeSample::MISSING_GT)
-                    && (*rec.getAlleles(rec.getGT(sample_id, 0)) != afr_allele)) {
+                    && (*rec.getAlleles(rec.getGT(sample_id, 0)) != major_afr_allele)) {
                 // add this position to the final list of sites
-                result.emplace(afr_pos, std::make_pair(
-                    afr_allele,
+                result.emplace(pos, std::make_pair(
+                    major_afr_allele,
                     *rec.getAlleles(rec.getGT(sample_id, 0)))
                 );
             }
@@ -196,8 +208,8 @@ filter_out_triallelic(std::map<int, std::pair<char, char>> & sites,
 int
 main(int argc, char** argv)
 {
-    if (argc != 5) {
-        std::cout << "Usage\n\t./find_informative_sites chr_ID 1000G_VCF Altai_VCF Denisovan_VCF\n";
+    if (argc != 6) {
+        std::cout << "Usage\n\t./find_informative_sites chr_ID 1000G_VCF Altai_VCF Denisovan_VCF afr_freq_cutoff\n";
         return 0;
     }
 
@@ -207,8 +219,10 @@ main(int argc, char** argv)
     std::string altai_vcf_file(argv[3]);
     std::string denisovan_vcf_file(argv[4]);
 
+    float afr_freq_cutoff = std::atof(argv[5]);
+
     std::clog << "[Chromosome " << chr << "] Started scanning the 1000 genomes VCF file.\n";
-    std::vector<std::pair<int, char>> fixed_sites = get_fixed_afr_sites(hg1k_vcf_file, "tmp/afr_samples.list");
+    std::vector<std::pair<int, char>> fixed_sites = get_high_freq_afr_sites(hg1k_vcf_file, "tmp/afr_samples.list", afr_freq_cutoff);
     std::clog << "[Chromosome " << chr << "] Analysis of the 1000 genomes VCF file DONE (" << fixed_sites.size() << " sites)!\n";
 
     std::map<int, std::pair<char, char>> altai, denisovan;

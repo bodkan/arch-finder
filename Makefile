@@ -4,6 +4,7 @@ altai_vcf_path := /mnt/454/HighCovNeandertalGenome/1_Extended_VCF/AltaiNea
 denisovan_vcf_path := /mnt/454/HighCovNeandertalGenome/1_Extended_VCF/DenisovaPinky
 
 chromosomes := $(shell seq 1 22)
+afr_freq := 1.0
 
 src_dir := ./src
 
@@ -49,15 +50,15 @@ informative_sites_merged_tbi := $(output_vcf_dir)/all_info_sites.vcf.gz.tbi
 
 default:
 	@echo "Usage:"
-	@echo "\tmake deps            -- prepare all depencies (binaries, directories, etc.)"
+	@echo "\tmake deps                -- prepare all depencies (binaries, directories, etc.)"
 	@echo
-	@echo "\tmake scan            -- scan all chromosomes for introgressed alleles"
+	@echo "\tmake scan [afr_freq=1.0] -- scan all chromosomes for introgressed alleles"
 	@echo
 	@echo "\tNote: adding the -jN argument to make will run N scans in parallel"
 	@echo
-	@echo "\tmake clean_deps      -- clean depencies"
-	@echo "\tmake clean_results   -- clean results"
-	@echo "\tmake clean_all       -- clean everything"
+	@echo "\tmake clean_deps          -- clean depencies"
+	@echo "\tmake clean_results       -- clean results"
+	@echo "\tmake clean_all           -- clean everything"
 	@echo
 	@echo "\tPaths to directories with 1000 genomes VCFs as well as Altai Neanderthal\n \
        and Denisovan VCFs have to be set using hg2k_vcf_path, altai_vcf_path\n \
@@ -110,7 +111,7 @@ $(output_bed_dir)/%.bed: $(bin)
 	hg1k_vcf_file="$(hg1k_vcf_path)/ALL.chr$${chr_id}.*.vcf.gz"; \
 	altai_vcf_file="$(altai_vcf_path)/AltaiNea.hg19_1000g.$${chr_id}.mod.vcf.gz"; \
 	denisovan_vcf_file="$(denisovan_vcf_path)/DenisovaPinky.hg19_1000g.$${chr_id}.mod.vcf.gz"; \
-	$(bin) $${chr_id} $${hg1k_vcf_file} $${altai_vcf_file} $${denisovan_vcf_file} > $@
+	$(bin) $${chr_id} $${hg1k_vcf_file} $${altai_vcf_file} $${denisovan_vcf_file} $${afr_freq} > $@
 
 $(output_vcf_dir)/%.vcf.gz.tbi: $(output_vcf_dir)/%.vcf.gz
 	tabix -f $<
