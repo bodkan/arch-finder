@@ -8,7 +8,7 @@
 // than the specified frequency cutoff, return its value. 
 //
 std::pair<bool, char>
-high_freq_in_africa(VcfRecord& hg1k_rec, float freq_cutoff)
+high_freq_in_africa(VcfRecord& hg1k_rec, float arch_freq_cutoff)
 {
     int ref_counter = 0;
     int n_africans = hg1k_rec.getNumSamples();
@@ -29,9 +29,9 @@ high_freq_in_africa(VcfRecord& hg1k_rec, float freq_cutoff)
 
     // if the REF/ALT allele is at high frequency, return true
     // and the value of this allele
-    if (ref_freq >= freq_cutoff) {
+    if (ref_freq >= (1 - arch_freq_cutoff)) {
         return std::make_pair(true, *hg1k_rec.getAlleles(0));
-    } else if ((1 - ref_freq) >= freq_cutoff) {
+    } else if ((1 - ref_freq) >= (1 - arch_freq_cutoff)) {
         return std::make_pair(true, *hg1k_rec.getAlleles(1));
     } else {
         return std::make_pair(false, -1);
@@ -209,7 +209,7 @@ int
 main(int argc, char** argv)
 {
     if (argc != 6) {
-        std::cout << "Usage\n\t./find_informative_sites chr_ID 1000G_VCF Altai_VCF Denisovan_VCF afr_freq_cutoff\n";
+        std::cout << "Usage\n\t./find_informative_sites chr_ID 1000G_VCF Altai_VCF Denisovan_VCF arch_freq_cutoff\n";
         return 0;
     }
 
@@ -219,9 +219,9 @@ main(int argc, char** argv)
     std::string altai_vcf_file(argv[3]);
     std::string denisovan_vcf_file(argv[4]);
 
-    float afr_freq_cutoff = std::atof(argv[5]);
+    float arch_freq_cutoff = std::atof(argv[5]);
 
-    std::vector<std::pair<int, char>> fixed_sites = get_high_freq_afr_sites(hg1k_vcf_file, "tmp/afr_samples.list", afr_freq_cutoff);
+    std::vector<std::pair<int, char>> fixed_sites = get_high_freq_afr_sites(hg1k_vcf_file, "tmp/afr_samples.list", arch_freq_cutoff);
     std::clog << "[Chromosome " << chr << "] Analysis of the 1000 genomes VCF file done (" << fixed_sites.size() << " sites)\n";
 
     std::map<int, std::pair<char, char>> altai, denisovan;

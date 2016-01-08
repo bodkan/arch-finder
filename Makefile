@@ -4,7 +4,7 @@ altai_vcf_path := /mnt/454/HighCovNeandertalGenome/1_Extended_VCF/AltaiNea
 denisovan_vcf_path := /mnt/454/HighCovNeandertalGenome/1_Extended_VCF/DenisovaPinky
 
 chromosomes := $(shell seq 1 22)
-afr_freq := 1.0
+arch_freq := 0.0
 
 src_dir := ./src
 
@@ -52,7 +52,8 @@ default:
 	@echo "Usage:"
 	@echo "\tmake deps                -- prepare all depencies (binaries, directories, etc.)"
 	@echo
-	@echo "\tmake scan [afr_freq=1.0] -- scan all chromosomes for introgressed alleles"
+	@echo "\tmake scan [arch_freq=0.0] -- scan the genome for archaic-like alleles allowing"
+	@echo "\t                             for a certain frequency of such alleles in Africa"
 	@echo
 	@echo "\tNote: adding the -jN argument to make will run N scans in parallel"
 	@echo
@@ -111,7 +112,7 @@ $(output_bed_dir)/%.bed: $(bin)
 	hg1k_vcf_file="$(hg1k_vcf_path)/ALL.chr$${chr_id}.*.vcf.gz"; \
 	altai_vcf_file="$(altai_vcf_path)/AltaiNea.hg19_1000g.$${chr_id}.mod.vcf.gz"; \
 	denisovan_vcf_file="$(denisovan_vcf_path)/DenisovaPinky.hg19_1000g.$${chr_id}.mod.vcf.gz"; \
-	$(bin) $${chr_id} $${hg1k_vcf_file} $${altai_vcf_file} $${denisovan_vcf_file} $${afr_freq} > $@
+	$(bin) $${chr_id} $${hg1k_vcf_file} $${altai_vcf_file} $${denisovan_vcf_file} $${arch_freq} > $@
 
 $(output_vcf_dir)/%.vcf.gz.tbi: $(output_vcf_dir)/%.vcf.gz
 	tabix -f $<
