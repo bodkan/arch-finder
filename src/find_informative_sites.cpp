@@ -150,18 +150,19 @@ check_archaic_states(const std::string& vcf_filename,
         if (find_matching_variant(vcf, rec, pos, skip_reading)) {
             // to include this variant for further analysis, archaic
             //   * has to carry a valid allele (biallelic SNP),
-            //   * has to be homozygous at this site,
             //   * can't have a missing genotype,
-            //   * must be different than majority of Africans
+            //   * must carry allele different from majority of Africans
 	        if (((rec.getNumAlts() == 0) || (rec.getNumAlts() == 1))
                     && has_simple_allele(rec)
-                    && (rec.getGT(sample_id, 0) == rec.getGT(sample_id, 1))
                     && (rec.getGT(sample_id, 0) != VcfGenotypeSample::MISSING_GT)
-                    && (*rec.getAlleles(rec.getGT(sample_id, 0)) != major_afr_allele)) {
+                    && ((*rec.getAlleles(rec.getGT(sample_id, 0)) != major_afr_allele)
+                       || (*rec.getAlleles(rec.getGT(sample_id, 1)) != major_afr_allele))) {
                 // add this position to the final list of sites
+                char allele_1 = *rec.getAlleles(rec.getGT(sample_id, 0));
+                char allele_2 = *rec.getAlleles(rec.getGT(sample_id, 1));
                 result.emplace(pos, std::make_pair(
                     major_afr_allele,
-                    *rec.getAlleles(rec.getGT(sample_id, 0)))
+                    (allele_1 != major_afr_allele) ? allele_1 : allele_2)
                 );
             }
         }
