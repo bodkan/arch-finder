@@ -80,7 +80,7 @@ $(output_vcf_dir)/%.vcf.gz: $(output_bed_dir)/%.bed $(non_afr_samples)
 	chr_id=$(subst chr,,$(subst .vcf.gz,,$(notdir $@))); \
 	hg1k_vcf_file="$(hg1k_vcf_path)/ALL.chr$${chr_id}.*.vcf.gz"; \
 	bcftools norm --multiallelics +snps -R $< $${hg1k_vcf_file} \
-	     | bcftools view -m2 -M2 -v snps \
+	     | bcftools view -M2 -v snps \
 	     | bgzip \
 	     > $@
 	# the following hack solves the problem of multiallelic sites
