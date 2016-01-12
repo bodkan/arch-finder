@@ -43,8 +43,14 @@ arch_informative_sites_merged_bed := $(output_bed_dir)/all_chromosomes_nea+den_i
 informative_sites_vcf := $(addprefix $(output_vcf_dir)/, $(addprefix chr,$(addsuffix .vcf.gz,$(chromosomes))))
 informative_sites_tbi := $(addprefix $(output_vcf_dir)/, $(addprefix chr,$(addsuffix .vcf.gz.tbi,$(chromosomes))))
 
-informative_sites_merged_vcf := $(output_vcf_dir)/all_info_sites.vcf.gz
-informative_sites_merged_tbi := $(output_vcf_dir)/all_info_sites.vcf.gz.tbi
+informative_sites_merged_vcf := $(output_vcf_dir)/nea+den_info_sites.vcf.gz
+informative_sites_merged_tbi := $(output_vcf_dir)/nea+den_info_sites.vcf.gz.tbi
+
+nea_informative_sites_vcf := $(output_vcf_dir)/nea_info_sites.vcf.gz
+nea_informative_sites_tbi := $(output_vcf_dir)/nea_info_sites.vcf.gz.tbi
+
+den_informative_sites_vcf := $(output_vcf_dir)/den_info_sites.vcf.gz
+den_informative_sites_tbi := $(output_vcf_dir)/den_info_sites.vcf.gz.tbi
 
 .PHONY: clean scratch
 
@@ -68,13 +74,23 @@ default:
 
 deps: $(directories) $(bin)
 
-scan: $(informative_sites_vcf) $(informative_sites_tbi) $(informative_sites_merged_vcf) $(informative_sites_merged_tbi) $(arch_informative_sites_merged_bed) $(nea_informative_sites_merged_bed) $(den_informative_sites_merged_bed)
+scan: $(informative_sites_merged_vcf) $(informative_sites_merged_tbi) $(nea_informative_sites_vcf) $(nea_informative_sites_tbi) $(den_informative_sites_vcf) $(den_informative_sites_tbi) $(arch_informative_sites_merged_bed) $(nea_informative_sites_merged_bed) $(den_informative_sites_merged_bed)
 
 $(informative_sites_merged_vcf): $(informative_sites_vcf)
 	bcftools concat $(addprefix $(output_vcf_dir)/, $(addprefix chr,$(addsuffix .vcf.gz,$(chromosomes)))) --output-type z --output $@
 
 $(informative_sites_merged_tbi): $(informative_sites_merged_vcf)
 	tabix -f $<
+
+$(nea_informative_sites_vcf): $(informative_sites_merged_vcf) $(nea_informative_sites_merged_bed)
+	bcftools view $< -R $(nea_informative_sites_merged_bed) \
+		| bgzip \
+		> $@
+
+$(den_informative_sites_vcf): $(informative_sites_merged_vcf) $(den_informative_sites_merged_bed)
+	bcftools view $< -R $(den_informative_sites_merged_bed) \
+		| bgzip \
+		> $@
 
 $(output_vcf_dir)/%.vcf.gz: $(output_bed_dir)/%.bed $(non_afr_samples)
 	chr_id=$(subst chr,,$(subst .vcf.gz,,$(notdir $@))); \
