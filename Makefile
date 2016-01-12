@@ -109,16 +109,16 @@ $(output_vcf_dir)/%.vcf.gz: $(output_bed_dir)/%.bed $(non_afr_samples)
 	touch $@
 
 $(arch_informative_sites_bed): $(arch_informative_sites_vcf)
-	cat $(informative_sites_per_chr_bed) > $@
+	cat $(informative_sites_per_chr_bed) | cut -f1-5 > $@
 
 $(nea_informative_sites_bed): $(arch_informative_sites_vcf)
 	for i in $(chromosomes); do \
-	    awk '$$6 == 1' $(output_bed_dir)/chr$${i}.bed >> $@; \
+	    awk '$$6 == 1' $(output_bed_dir)/chr$${i}.bed | cut -f1-5 >> $@; \
 	done
 
 $(den_informative_sites_bed): $(arch_informative_sites_vcf)
 	for i in $(chromosomes); do \
-	    awk '$$7 ==1' $(output_bed_dir)/chr$${i}.bed >> $@; \
+	    awk '$$7 ==1' $(output_bed_dir)/chr$${i}.bed | cut -f1-5 >> $@; \
 	done
 
 $(output_bed_dir)/%.bed: $(bin)
