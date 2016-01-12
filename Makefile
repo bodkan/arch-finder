@@ -34,25 +34,25 @@ all_pops := $(afr_samples) $(yri_samples) $(non_afr_samples) $(eur_samples) $(ea
 
 bin := $(bin_dir)/find_informative_sites
 
-informative_sites_bed := $(addprefix $(output_bed_dir)/, $(addprefix chr,$(addsuffix .bed,$(chromosomes))))
+informative_sites_per_chr_bed := $(addprefix $(output_bed_dir)/, $(addprefix chr,$(addsuffix .bed,$(chromosomes))))
 
-nea_informative_sites_merged_bed := $(output_bed_dir)/all_chromosomes_nea_info_sites.bed
-den_informative_sites_merged_bed := $(output_bed_dir)/all_chromosomes_den_info_sites.bed
-arch_informative_sites_merged_bed := $(output_bed_dir)/all_chromosomes_nea+den_info_sites.bed
+informative_sites_per_chr_vcf := $(addprefix $(output_vcf_dir)/, $(addprefix chr,$(addsuffix .vcf.gz,$(chromosomes))))
 
-informative_sites_vcf := $(addprefix $(output_vcf_dir)/, $(addprefix chr,$(addsuffix .vcf.gz,$(chromosomes))))
-informative_sites_tbi := $(addprefix $(output_vcf_dir)/, $(addprefix chr,$(addsuffix .vcf.gz.tbi,$(chromosomes))))
+arch_informative_sites_bed := $(output_bed_dir)/arch_informative_sites.bed
+nea_informative_sites_bed := $(output_bed_dir)/nea_informative_sites.bed
+den_informative_sites_bed := $(output_bed_dir)/den_informative_sites.bed
 
-informative_sites_merged_vcf := $(output_vcf_dir)/nea+den_info_sites.vcf.gz
-informative_sites_merged_tbi := $(output_vcf_dir)/nea+den_info_sites.vcf.gz.tbi
+arch_informative_sites_vcf := $(output_vcf_dir)/arch_informative_sites.vcf.gz
+nea_informative_sites_vcf := $(output_vcf_dir)/nea_informative_sites.vcf.gz
+den_informative_sites_vcf := $(output_vcf_dir)/den_informative_sites.vcf.gz
 
-nea_informative_sites_vcf := $(output_vcf_dir)/nea_info_sites.vcf.gz
-nea_informative_sites_tbi := $(output_vcf_dir)/nea_info_sites.vcf.gz.tbi
-
-den_informative_sites_vcf := $(output_vcf_dir)/den_info_sites.vcf.gz
-den_informative_sites_tbi := $(output_vcf_dir)/den_info_sites.vcf.gz.tbi
+arch_informative_sites_tbi := $(output_vcf_dir)/arch_informative_sites.vcf.gz.tbi
+nea_informative_sites_tbi := $(output_vcf_dir)/nea_informative_sites.vcf.gz.tbi
+den_informative_sites_tbi := $(output_vcf_dir)/den_informative_sites.vcf.gz.tbi
 
 .PHONY: clean scratch
+
+.INTERMEDIATE: $(informative_sites_per_chr_vcf)
 
 default:
 	@echo "Usage:"
@@ -74,23 +74,19 @@ default:
 
 deps: $(directories) $(bin)
 
-scan: $(informative_sites_merged_vcf) $(informative_sites_merged_tbi) $(nea_informative_sites_vcf) $(nea_informative_sites_tbi) $(den_informative_sites_vcf) $(den_informative_sites_tbi) $(arch_informative_sites_merged_bed) $(nea_informative_sites_merged_bed) $(den_informative_sites_merged_bed)
+scan: $(arch_informative_sites_bed) $(nea_informative_sites_bed) $(den_informative_sites_bed) $(arch_informative_sites_vcf) $(arch_informative_sites_tbi) $(nea_informative_sites_vcf) $(nea_informative_sites_tbi) $(den_informative_sites_vcf) $(den_informative_sites_tbi)
 
-$(informative_sites_merged_vcf): $(informative_sites_vcf)
+$(arch_informative_sites_vcf): $(informative_sites_per_chr_vcf)
 	bcftools concat $(addprefix $(output_vcf_dir)/, $(addprefix chr,$(addsuffix .vcf.gz,$(chromosomes)))) --output-type z --output $@
 
-$(informative_sites_merged_tbi): $(informative_sites_merged_vcf)
+$(nea_informative_sites_vcf): $(arch_informative_sites_vcf) $(nea_informative_sites_bed)
+	bcftools view $< -R $(nea_informative_sites_bed) | bgzip > $@
+
+$(den_informative_sites_vcf): $(arch_informative_sites_vcf) $(den_informative_sites_bed)
+	bcftools view $< -R $(den_informative_sites_bed) | bgzip > $@
+
+$(output_vcf_dir)/%.vcf.gz.tbi: $(output_vcf_dir)/%.vcf.gz
 	tabix -f $<
-
-$(nea_informative_sites_vcf): $(informative_sites_merged_vcf) $(nea_informative_sites_merged_bed)
-	bcftools view $< -R $(nea_informative_sites_merged_bed) \
-		| bgzip \
-		> $@
-
-$(den_informative_sites_vcf): $(informative_sites_merged_vcf) $(den_informative_sites_merged_bed)
-	bcftools view $< -R $(den_informative_sites_merged_bed) \
-		| bgzip \
-		> $@
 
 $(output_vcf_dir)/%.vcf.gz: $(output_bed_dir)/%.bed $(non_afr_samples)
 	chr_id=$(subst chr,,$(subst .vcf.gz,,$(notdir $@))); \
@@ -110,15 +106,15 @@ $(output_vcf_dir)/%.vcf.gz: $(output_bed_dir)/%.bed $(non_afr_samples)
 	mv $< $<_tmp; bedtools intersect -a $<_tmp -b $@ -sorted > $<; rm $<_tmp
 	touch $@
 
-$(arch_informative_sites_merged_bed): $(informative_sites_vcf)
-	cat $(informative_sites_bed) > $@
+$(arch_informative_sites_bed): $(arch_informative_sites_vcf)
+	cat $(informative_sites_per_chr_bed) > $@
 
-$(nea_informative_sites_merged_bed): $(informative_sites_vcf)
+$(nea_informative_sites_bed): $(arch_informative_sites_vcf)
 	for i in $(chromosomes); do \
 	    awk '$$6 == 1' $(output_bed_dir)/chr$${i}.bed >> $@; \
 	done
 
-$(den_informative_sites_merged_bed): $(informative_sites_vcf)
+$(den_informative_sites_bed): $(arch_informative_sites_vcf)
 	for i in $(chromosomes); do \
 	    awk '$$7 ==1' $(output_bed_dir)/chr$${i}.bed >> $@; \
 	done
@@ -129,9 +125,6 @@ $(output_bed_dir)/%.bed: $(bin)
 	altai_vcf_file="$(altai_vcf_path)/AltaiNea.hg19_1000g.$${chr_id}.mod.vcf.gz"; \
 	denisovan_vcf_file="$(denisovan_vcf_path)/DenisovaPinky.hg19_1000g.$${chr_id}.mod.vcf.gz"; \
 	$(bin) $${chr_id} $${hg1k_vcf_file} $${altai_vcf_file} $${denisovan_vcf_file} $(arch_freq) > $@
-
-$(output_vcf_dir)/%.vcf.gz.tbi: $(output_vcf_dir)/%.vcf.gz
-	tabix -f $<
 
 $(bin): src/find_informative_sites.cpp $(all_pops) $(LIBSTATGEN)
 	$(CXX) $< -o $@ $(INCLUDES) $(LIBS) $(CXXFLAGS)
