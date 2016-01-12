@@ -171,4 +171,4 @@ clean_results:
 	rm -rf $(output_bed_dir) $(output_vcf_dir)
 
 clean_all:
-	rm -rf $(directories)
+	rm -rf $(bin_dir) $(lib_dir) $(tmp_dir) output_bed_* output_vcf_*
