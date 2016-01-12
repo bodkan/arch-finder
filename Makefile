@@ -8,8 +8,8 @@ arch_freq := 0.0
 
 src_dir := ./src
 
-output_bed_dir := output_bed
-output_vcf_dir := output_vcf
+output_bed_dir := output_bed_arch_freq_$(arch_freq)
+output_vcf_dir := output_vcf_arch_freq_$(arch_freq)
 bin_dir := bin
 lib_dir := lib
 tmp_dir := tmp
@@ -56,16 +56,18 @@ den_informative_sites_tbi := $(output_vcf_dir)/den_informative_sites.vcf.gz.tbi
 
 default:
 	@echo "Usage:"
-	@echo "\tmake deps                -- prepare all depencies (binaries, directories, etc.)"
+	@echo "\tmake deps [arch_freq=0.0] -- prepare all depencies (binaries, directories for"
+	@echo "\t                             output files, etc.)"
 	@echo
 	@echo "\tmake scan [arch_freq=0.0] -- scan the genome for archaic-like alleles allowing"
 	@echo "\t                             for a certain frequency of such alleles in Africa"
+	@echo "\t                             (no archaic-like alleles allowed by default)"
 	@echo
 	@echo "\tNote: adding the -jN argument to make will run N scans in parallel"
 	@echo
-	@echo "\tmake clean_deps          -- clean depencies"
-	@echo "\tmake clean_results       -- clean results"
-	@echo "\tmake clean_all           -- clean everything"
+	@echo "\tmake clean_deps           -- clean depencies"
+	@echo "\tmake clean_results        -- clean results"
+	@echo "\tmake clean_all            -- clean everything"
 	@echo
 	@echo "\tPaths to directories with 1000 genomes VCFs as well as Altai Neanderthal\n \
        and Denisovan VCFs have to be set using hg2k_vcf_path, altai_vcf_path\n \
