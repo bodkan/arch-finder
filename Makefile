@@ -13,7 +13,7 @@ output_vcf_dir := output_vcf_arch_freq_$(arch_freq)
 bin_dir := bin
 lib_dir := lib
 tmp_dir := tmp
-directories := $(output_vcf_dir) $(output_bed_dir) $(bin_dir) $(lib_dir) $(tmp_dir)
+directories := $(bin_dir) $(lib_dir) $(tmp_dir)
 
 LIBSTATGEN := $(lib_dir)/libStatGen
 
@@ -56,8 +56,7 @@ den_informative_sites_tbi := $(output_vcf_dir)/den_informative_sites.vcf.gz.tbi
 
 default:
 	@echo "Usage:"
-	@echo "\tmake deps [arch_freq=0.0] -- prepare all depencies (binaries, directories for"
-	@echo "\t                             output files, etc.)"
+	@echo "\tmake deps                 -- prepare depencies (binaries, directories etc.)"
 	@echo
 	@echo "\tmake scan [arch_freq=0.0] -- scan the genome for archaic-like alleles allowing"
 	@echo "\t                             for a certain frequency of such alleles in Africa"
@@ -76,7 +75,7 @@ default:
 
 deps: $(directories) $(bin)
 
-scan: $(arch_informative_sites_bed) $(nea_informative_sites_bed) $(den_informative_sites_bed) $(arch_informative_sites_vcf) $(arch_informative_sites_tbi) $(nea_informative_sites_vcf) $(nea_informative_sites_tbi) $(den_informative_sites_vcf) $(den_informative_sites_tbi)
+scan: $(output_vcf_dir) $(output_bed_dir) $(arch_informative_sites_bed) $(nea_informative_sites_bed) $(den_informative_sites_bed) $(arch_informative_sites_vcf) $(arch_informative_sites_tbi) $(nea_informative_sites_vcf) $(nea_informative_sites_tbi) $(den_informative_sites_vcf) $(den_informative_sites_tbi)
 
 $(arch_informative_sites_vcf): $(informative_sites_per_chr_vcf)
 	bcftools concat $(addprefix $(output_vcf_dir)/, $(addprefix chr,$(addsuffix .vcf.gz,$(chromosomes)))) --output-type z --output $@
@@ -161,7 +160,7 @@ $(sas_samples): $(hg1k_samples)
 $(amr_samples): $(hg1k_samples)
 	grep "AMR" $< | cut -f1 > $@
 
-$(directories):
+$(directories) $(output_bed_dir) $(output_vcf_dir):
 	mkdir -p $@
 
 clean_deps:
