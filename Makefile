@@ -13,7 +13,7 @@ output_vcf_dir := output_vcf
 bin_dir := bin
 lib_dir := lib
 tmp_dir := tmp
-directories := $(bin_dir) $(lib_dir) $(tmp_dir)
+directories := $(bin_dir) $(lib_dir) $(tmp_dir) $(output_bed_dir) $(output_vcf_dir)
 
 LIBSTATGEN := $(lib_dir)/libStatGen
 
@@ -159,7 +159,7 @@ $(sas_samples): $(hg1k_samples)
 $(amr_samples): $(hg1k_samples)
 	grep "AMR" $< | cut -f1 > $@
 
-$(directories) $(output_bed_dir) $(output_vcf_dir):
+$(directories):
 	mkdir -p $@
 
 clean_deps:
@@ -169,4 +169,4 @@ clean_results:
 	rm -rf $(output_bed_dir) $(output_vcf_dir)
 
 clean_all:
-	rm -rf $(bin_dir) $(lib_dir) $(tmp_dir) output_bed_* output_vcf_*
+	rm -rf $(directories)
