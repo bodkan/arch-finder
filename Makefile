@@ -79,10 +79,10 @@ scan: $(output_vcf_dir) $(output_bed_dir) $(arch_informative_sites_bed) $(nea_in
 $(arch_informative_sites_vcf): $(informative_sites_per_chr_vcf)
 	bcftools concat $(addprefix $(output_vcf_dir)/, $(addprefix chr,$(addsuffix .vcf.gz,$(chromosomes)))) --output-type z --output $@
 
-$(nea_informative_sites_vcf): $(arch_informative_sites_vcf) $(nea_informative_sites_bed)
+$(nea_informative_sites_vcf): $(arch_informative_sites_vcf) $(arch_informative_sites_tbi) $(nea_informative_sites_bed)
 	bcftools view $< -R $(nea_informative_sites_bed) | bgzip > $@
 
-$(den_informative_sites_vcf): $(arch_informative_sites_vcf) $(den_informative_sites_bed)
+$(den_informative_sites_vcf): $(arch_informative_sites_vcf) $(arch_informative_sites_tbi) $(den_informative_sites_bed)
 	bcftools view $< -R $(den_informative_sites_bed) | bgzip > $@
 
 $(output_vcf_dir)/%.vcf.gz.tbi: $(output_vcf_dir)/%.vcf.gz
