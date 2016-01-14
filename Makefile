@@ -8,8 +8,8 @@ arch_freq := 0.0
 
 src_dir := ./src
 
-output_bed_dir := output_bed_arch_freq_$(arch_freq)
-output_vcf_dir := output_vcf_arch_freq_$(arch_freq)
+output_bed_dir := output_bed
+output_vcf_dir := output_vcf
 bin_dir := bin
 lib_dir := lib
 tmp_dir := tmp
@@ -35,20 +35,19 @@ all_pops := $(afr_samples) $(yri_samples) $(non_afr_samples) $(eur_samples) $(ea
 bin := $(bin_dir)/find_informative_sites
 
 informative_sites_per_chr_bed := $(addprefix $(output_bed_dir)/, $(addprefix chr,$(addsuffix .bed,$(chromosomes))))
-
 informative_sites_per_chr_vcf := $(addprefix $(output_vcf_dir)/, $(addprefix chr,$(addsuffix .vcf.gz,$(chromosomes))))
 
-arch_informative_sites_bed := $(output_bed_dir)/arch_informative_sites.bed
-nea_informative_sites_bed := $(output_bed_dir)/nea_informative_sites.bed
-den_informative_sites_bed := $(output_bed_dir)/den_informative_sites.bed
+arch_informative_sites_bed := $(output_bed_dir)/arch_informative_sites_arch_freq_$(arch_freq).bed
+nea_informative_sites_bed := $(output_bed_dir)/nea_informative_sites_arch_freq_$(arch_freq).bed
+den_informative_sites_bed := $(output_bed_dir)/den_informative_sites_arch_freq_$(arch_freq).bed
 
-arch_informative_sites_vcf := $(output_vcf_dir)/arch_informative_sites.vcf.gz
-nea_informative_sites_vcf := $(output_vcf_dir)/nea_informative_sites.vcf.gz
-den_informative_sites_vcf := $(output_vcf_dir)/den_informative_sites.vcf.gz
+arch_informative_sites_vcf := $(output_vcf_dir)/arch_informative_sites_arch_freq_$(arch_freq).vcf.gz
+nea_informative_sites_vcf := $(output_vcf_dir)/nea_informative_sites_arch_freq_$(arch_freq).vcf.gz
+den_informative_sites_vcf := $(output_vcf_dir)/den_informative_sites_arch_freq_$(arch_freq).vcf.gz
 
-arch_informative_sites_tbi := $(output_vcf_dir)/arch_informative_sites.vcf.gz.tbi
-nea_informative_sites_tbi := $(output_vcf_dir)/nea_informative_sites.vcf.gz.tbi
-den_informative_sites_tbi := $(output_vcf_dir)/den_informative_sites.vcf.gz.tbi
+arch_informative_sites_tbi := $(output_vcf_dir)/arch_informative_sites_arch_freq_$(arch_freq).vcf.gz.tbi
+nea_informative_sites_tbi := $(output_vcf_dir)/nea_informative_sites_arch_freq_$(arch_freq).vcf.gz.tbi
+den_informative_sites_tbi := $(output_vcf_dir)/den_informative_sites_arch_freq_$(arch_freq).vcf.gz.tbi
 
 .PHONY: clean scratch
 
