@@ -107,17 +107,33 @@ $(output_vcf_dir)/%.vcf.gz: $(output_bed_dir)/%.bed $(non_afr_samples)
 	touch $@
 
 $(arch_informative_sites_bed): $(arch_informative_sites_vcf)
-	cat $(informative_sites_per_chr_bed) | cut -f1-5 > $@
+	cat $(informative_sites_per_chr_bed) | cut -f1-5 > $@_tmp; \
+	# add a column with a reference allele to the final BED file:
+	paste $@_tmp <(bcftools view -H $< | cut -f4) \
+		| awk -v OFS="\t" '{ print $1, $2, $3, $6, $4, $5 }' \
+		> $@; \
+	rm $@_tmp
 
-$(nea_informative_sites_bed): $(arch_informative_sites_vcf)
+$(nea_informative_sites_bed): $(nea_informative_sites_vcf)
 	for i in $(chromosomes); do \
 	    awk '$$6 == 1' $(output_bed_dir)/chr$${i}.bed | cut -f1-5 >> $@; \
-	done
+	done; \
+	# add a column with a reference allele to the final BED file:
+	paste $@_tmp <(bcftools view -H $< | cut -f4) \
+		| awk -v OFS="\t" '{ print $1, $2, $3, $6, $4, $5 }' \
+		> $@; \
+	rm $@_tmp
 
-$(den_informative_sites_bed): $(arch_informative_sites_vcf)
+$(den_informative_sites_bed): $(den_informative_sites_vcf)
 	for i in $(chromosomes); do \
 	    awk '$$7 ==1' $(output_bed_dir)/chr$${i}.bed | cut -f1-5 >> $@; \
-	done
+	done; \
+	# add a column with a reference allele to the final BED file:
+	paste $@_tmp <(bcftools view -H $< | cut -f4) \
+		| awk -v OFS="\t" '{ print $1, $2, $3, $6, $4, $5 }' \
+		> $@; \
+	rm $@_tmp
+
 
 $(output_bed_dir)/%.bed: $(bin)
 	chr_id=$(subst chr,,$(basename $(notdir $@))); \
