@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 # the following paths can be specified on the command line when invoking make
 hg1k_vcf_path := /mnt/sequencedb/1000Genomes/ftp/phase3/20140910
 altai_vcf_path := /mnt/454/HighCovNeandertalGenome/1_Extended_VCF/AltaiNea
@@ -34,24 +36,23 @@ all_pops := $(afr_samples) $(yri_samples) $(non_afr_samples) $(eur_samples) $(ea
 
 bin := $(bin_dir)/find_informative_sites
 
-informative_sites_per_chr_bed := $(addprefix $(output_bed_dir)/, $(addprefix chr,$(addsuffix .bed,$(chromosomes))))
-informative_sites_per_chr_vcf := $(addprefix $(output_vcf_dir)/, $(addprefix chr,$(addsuffix .vcf.gz,$(chromosomes))))
+informative_sites_per_chr_bed := $(addprefix $(output_bed_dir)/, $(addprefix chr,$(addsuffix _arch_freq_$(arch_freq).bed,$(chromosomes))))
+
+informative_sites_per_chr_vcf := $(addprefix $(output_vcf_dir)/, $(addprefix chr,$(addsuffix _arch_freq_$(arch_freq).vcf.gz,$(chromosomes))))
+informative_sites_per_chr_tbi := $(addprefix $(output_vcf_dir)/, $(addprefix chr,$(addsuffix _arch_freq_$(arch_freq).vcf.gz.tbi,$(chromosomes))))
+
+raw_arch_informative_sites_bed := $(output_bed_dir)/raw_arch_informative_sites_arch_freq_$(arch_freq).bed
 
 arch_informative_sites_bed := $(output_bed_dir)/arch_informative_sites_arch_freq_$(arch_freq).bed
 nea_informative_sites_bed := $(output_bed_dir)/nea_informative_sites_arch_freq_$(arch_freq).bed
 den_informative_sites_bed := $(output_bed_dir)/den_informative_sites_arch_freq_$(arch_freq).bed
 
 arch_informative_sites_vcf := $(output_vcf_dir)/arch_informative_sites_arch_freq_$(arch_freq).vcf.gz
-nea_informative_sites_vcf := $(output_vcf_dir)/nea_informative_sites_arch_freq_$(arch_freq).vcf.gz
-den_informative_sites_vcf := $(output_vcf_dir)/den_informative_sites_arch_freq_$(arch_freq).vcf.gz
-
 arch_informative_sites_tbi := $(output_vcf_dir)/arch_informative_sites_arch_freq_$(arch_freq).vcf.gz.tbi
-nea_informative_sites_tbi := $(output_vcf_dir)/nea_informative_sites_arch_freq_$(arch_freq).vcf.gz.tbi
-den_informative_sites_tbi := $(output_vcf_dir)/den_informative_sites_arch_freq_$(arch_freq).vcf.gz.tbi
 
 .PHONY: clean scratch
 
-.INTERMEDIATE: $(informative_sites_per_chr_vcf)
+.INTERMEDIATE: $(raw_arch_informative_sites_arch_freq) $(informative_sites_per_chr_bed)
 
 default:
 	@echo "Usage:"
@@ -74,22 +75,16 @@ default:
 
 deps: $(directories) $(bin)
 
-scan: $(output_vcf_dir) $(output_bed_dir) $(arch_informative_sites_bed) $(nea_informative_sites_bed) $(den_informative_sites_bed) $(arch_informative_sites_vcf) $(arch_informative_sites_tbi) $(nea_informative_sites_vcf) $(nea_informative_sites_tbi) $(den_informative_sites_vcf) $(den_informative_sites_tbi)
+scan: $(output_vcf_dir) $(output_bed_dir) $(arch_informative_sites_bed) $(nea_informative_sites_bed) $(den_informative_sites_bed) $(informative_sites_per_chr_vcf) $(informative_sites_per_chr_tbi) $(arch_informative_sites_vcf) $(arch_informative_sites_tbi)
 
 $(arch_informative_sites_vcf): $(informative_sites_per_chr_vcf)
-	bcftools concat $(addprefix $(output_vcf_dir)/, $(addprefix chr,$(addsuffix .vcf.gz,$(chromosomes)))) --output-type z --output $@
-
-$(nea_informative_sites_vcf): $(arch_informative_sites_vcf) $(arch_informative_sites_tbi) $(nea_informative_sites_bed)
-	bcftools view $< -R $(nea_informative_sites_bed) | bgzip > $@
-
-$(den_informative_sites_vcf): $(arch_informative_sites_vcf) $(arch_informative_sites_tbi) $(den_informative_sites_bed)
-	bcftools view $< -R $(den_informative_sites_bed) | bgzip > $@
+	bcftools concat $(informative_sites_per_chr_vcf) --output-type z --output $@
 
 $(output_vcf_dir)/%.vcf.gz.tbi: $(output_vcf_dir)/%.vcf.gz
 	tabix -f $<
 
-$(output_vcf_dir)/%.vcf.gz: $(output_bed_dir)/%.bed $(non_afr_samples)
-	chr_id=$(subst chr,,$(subst .vcf.gz,,$(notdir $@))); \
+$(output_vcf_dir)/chr%.vcf.gz: $(output_bed_dir)/chr%.bed $(non_afr_samples)
+	chr_id=$(subst chr,,$(subst _arch_freq_$(arch_freq).vcf.gz,,$(notdir $@))); \
 	hg1k_vcf_file="$(hg1k_vcf_path)/ALL.chr$${chr_id}.*.vcf.gz"; \
 	bcftools norm --multiallelics +snps -R $< $${hg1k_vcf_file} \
 	     | bcftools view -M2 -v snps \
@@ -106,37 +101,25 @@ $(output_vcf_dir)/%.vcf.gz: $(output_bed_dir)/%.bed $(non_afr_samples)
 	mv $< $<_tmp; bedtools intersect -a $<_tmp -b $@ -sorted > $<; rm $<_tmp
 	touch $@
 
-$(arch_informative_sites_bed): $(arch_informative_sites_vcf)
-	cat $(informative_sites_per_chr_bed) | cut -f1-5 > $@_tmp; \
+$(raw_arch_informative_sites_bed): $(informative_sites_per_chr_bed) $(arch_informative_sites_vcf)
+	cat $(informative_sites_per_chr_bed) > $@_tmp; \
 	# add a column with a reference allele to the final BED file:
-	paste $@_tmp <(bcftools view -H $< | cut -f4) \
-		| awk -v OFS="\t" '{ print $1, $2, $3, $6, $4, $5 }' \
+	paste $@_tmp <(bcftools view -H $(arch_informative_sites_vcf) | cut -f4) \
+		| awk -v OFS="\t" '{ print $$1, $$2, $$3, $$8, $$4, $$5, $$6, $$7 }' \
 		> $@; \
 	rm $@_tmp
 
-$(nea_informative_sites_bed): $(nea_informative_sites_vcf)
-	for i in $(chromosomes); do \
-	    awk '$$6 == 1' $(output_bed_dir)/chr$${i}.bed | cut -f1-5 >> $@; \
-	done; \
-	# add a column with a reference allele to the final BED file:
-	paste $@_tmp <(bcftools view -H $< | cut -f4) \
-		| awk -v OFS="\t" '{ print $1, $2, $3, $6, $4, $5 }' \
-		> $@; \
-	rm $@_tmp
+$(arch_informative_sites_bed): $(raw_arch_informative_sites_bed)
+	cut -f1-5 $< > $@
 
-$(den_informative_sites_bed): $(den_informative_sites_vcf)
-	for i in $(chromosomes); do \
-	    awk '$$7 ==1' $(output_bed_dir)/chr$${i}.bed | cut -f1-5 >> $@; \
-	done; \
-	# add a column with a reference allele to the final BED file:
-	paste $@_tmp <(bcftools view -H $< | cut -f4) \
-		| awk -v OFS="\t" '{ print $1, $2, $3, $6, $4, $5 }' \
-		> $@; \
-	rm $@_tmp
+$(nea_informative_sites_bed): $(raw_arch_informative_sites_bed)
+	awk '$$7 == 1' $< | cut -f1-5 >> $@
 
+$(den_informative_sites_bed): $(raw_arch_informative_sites_bed)
+	awk '$$8 == 1' $< | cut -f1-5 >> $@
 
-$(output_bed_dir)/%.bed: $(bin)
-	chr_id=$(subst chr,,$(basename $(notdir $@))); \
+$(output_bed_dir)/chr%.bed: $(bin)
+	chr_id=$(subst chr,,$(subst _arch_freq_$(arch_freq),,$(basename $(notdir $@)))); \
 	hg1k_vcf_file="$(hg1k_vcf_path)/ALL.chr$${chr_id}.*.vcf.gz"; \
 	altai_vcf_file="$(altai_vcf_path)/AltaiNea.hg19_1000g.$${chr_id}.mod.vcf.gz"; \
 	denisovan_vcf_file="$(denisovan_vcf_path)/DenisovaPinky.hg19_1000g.$${chr_id}.mod.vcf.gz"; \
