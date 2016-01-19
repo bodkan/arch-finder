@@ -222,7 +222,7 @@ main(int argc, char** argv)
 
     float arch_freq_cutoff = std::atof(argv[5]);
 
-    std::vector<std::pair<int, char>> fixed_sites = get_high_freq_afr_sites(hg1k_vcf_file, "tmp/afr_samples.list", arch_freq_cutoff);
+    std::vector<std::pair<int, char>> fixed_sites = get_high_freq_afr_sites(hg1k_vcf_file, "input/afr_samples.list", arch_freq_cutoff);
     std::clog << "[Chromosome " << chr << "] Analysis of the 1000 genomes VCF file done (" << fixed_sites.size() << " sites)\n";
 
     std::map<int, std::pair<char, char>> altai, denisovan;

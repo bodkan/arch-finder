@@ -1,4 +1,5 @@
 bin/
+input/
 lib/
 output_bed/
 output_vcf/

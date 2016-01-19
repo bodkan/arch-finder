@@ -10,12 +10,13 @@ arch_freq := 0.0
 
 src_dir := ./src
 
+input_dir := input
 output_bed_dir := output_bed
 output_vcf_dir := output_vcf
 bin_dir := bin
 lib_dir := lib
 tmp_dir := tmp
-directories := $(bin_dir) $(lib_dir) $(tmp_dir) $(output_bed_dir) $(output_vcf_dir)
+directories := $(bin_dir) $(lib_dir) $(tmp_dir) $(input_dir) $(output_bed_dir) $(output_vcf_dir)
 
 LIBSTATGEN := $(lib_dir)/libStatGen
 
@@ -25,23 +26,23 @@ CXXFLAGS := -O2 -Wall -Werror -std=c++11
 INCLUDES := -I$(LIBSTATGEN)/include
 LIBS := -L$(LIBSTATGEN) -lStatGen -lz
 
-hg1k_samples := $(tmp_dir)/1000genomes_samples.table
-afr_samples := $(tmp_dir)/afr_samples.list
-non_afr_samples := $(tmp_dir)/non_afr_samples.list
-eur_samples := $(tmp_dir)/eur_samples.list
-eas_samples := $(tmp_dir)/eas_samples.list
-sas_samples := $(tmp_dir)/sas_samples.list
-amr_samples := $(tmp_dir)/amr_samples.list
+hg1k_samples := $(input_dir)/1000genomes_samples.table
+afr_samples := $(input_dir)/afr_samples.list
+non_afr_samples := $(input_dir)/non_afr_samples.list
+eur_samples := $(input_dir)/eur_samples.list
+eas_samples := $(input_dir)/eas_samples.list
+sas_samples := $(input_dir)/sas_samples.list
+amr_samples := $(input_dir)/amr_samples.list
 all_pops := $(afr_samples) $(yri_samples) $(non_afr_samples) $(eur_samples) $(eas_samples) $(sas_samples) $(amr_samples)
 
 bin := $(bin_dir)/find_informative_sites
 
-informative_sites_per_chr_bed := $(addprefix $(output_bed_dir)/, $(addprefix chr,$(addsuffix _arch_freq_$(arch_freq).bed,$(chromosomes))))
+informative_sites_per_chr_bed := $(addprefix $(tmp_dir)/, $(addprefix chr,$(addsuffix _arch_freq_$(arch_freq).bed,$(chromosomes))))
 
 informative_sites_per_chr_vcf := $(addprefix $(output_vcf_dir)/, $(addprefix chr,$(addsuffix _arch_freq_$(arch_freq).vcf.gz,$(chromosomes))))
 informative_sites_per_chr_tbi := $(addprefix $(output_vcf_dir)/, $(addprefix chr,$(addsuffix _arch_freq_$(arch_freq).vcf.gz.tbi,$(chromosomes))))
 
-raw_arch_informative_sites_bed := $(output_bed_dir)/raw_arch_informative_sites_arch_freq_$(arch_freq).bed
+raw_arch_informative_sites_bed := $(tmp_dir)/raw_arch_informative_sites_arch_freq_$(arch_freq).bed
 
 arch_informative_sites_bed := $(output_bed_dir)/arch_informative_sites_arch_freq_$(arch_freq).bed
 nea_informative_sites_bed := $(output_bed_dir)/nea_informative_sites_arch_freq_$(arch_freq).bed
@@ -83,7 +84,7 @@ $(arch_informative_sites_vcf): $(informative_sites_per_chr_vcf)
 $(output_vcf_dir)/%.vcf.gz.tbi: $(output_vcf_dir)/%.vcf.gz
 	tabix -f $<
 
-$(output_vcf_dir)/chr%.vcf.gz: $(output_bed_dir)/chr%.bed $(non_afr_samples)
+$(output_vcf_dir)/chr%.vcf.gz: $(tmp_dir)/chr%.bed $(non_afr_samples)
 	chr_id=$(subst chr,,$(subst _arch_freq_$(arch_freq).vcf.gz,,$(notdir $@))); \
 	hg1k_vcf_file="$(hg1k_vcf_path)/ALL.chr$${chr_id}.*.vcf.gz"; \
 	bcftools norm --multiallelics +snps -R $< $${hg1k_vcf_file} \
@@ -118,7 +119,7 @@ $(nea_informative_sites_bed): $(raw_arch_informative_sites_bed)
 $(den_informative_sites_bed): $(raw_arch_informative_sites_bed)
 	awk '$$8 == 1' $< | cut -f1-5 >> $@
 
-$(output_bed_dir)/chr%.bed: $(bin)
+$(tmp_dir)/chr%.bed: $(bin)
 	chr_id=$(subst chr,,$(subst _arch_freq_$(arch_freq),,$(basename $(notdir $@)))); \
 	hg1k_vcf_file="$(hg1k_vcf_path)/ALL.chr$${chr_id}.*.vcf.gz"; \
 	altai_vcf_file="$(altai_vcf_path)/AltaiNea.hg19_1000g.$${chr_id}.mod.vcf.gz"; \
@@ -162,7 +163,7 @@ $(directories):
 	mkdir -p $@
 
 clean_deps:
-	rm -rf $(bin_dir) $(lib_dir) $(tmp_dir)
+	rm -rf $(bin_dir) $(lib_dir) $(tmp_dir) $(input_dir)
 
 clean_results:
 	rm -rf $(output_bed_dir) $(output_vcf_dir)
