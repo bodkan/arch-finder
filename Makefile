@@ -47,6 +47,8 @@ raw_arch_informative_sites_bed := $(tmp_dir)/raw_arch_informative_sites_arch_fre
 arch_informative_sites_bed := $(output_bed_dir)/arch_informative_sites_arch_freq_$(arch_freq).bed
 nea_informative_sites_bed := $(output_bed_dir)/nea_informative_sites_arch_freq_$(arch_freq).bed
 den_informative_sites_bed := $(output_bed_dir)/den_informative_sites_arch_freq_$(arch_freq).bed
+private_nea_informative_sites_bed := $(output_bed_dir)/private_nea_informative_sites_arch_freq_$(arch_freq).bed
+private_den_informative_sites_bed := $(output_bed_dir)/private_den_informative_sites_arch_freq_$(arch_freq).bed
 
 arch_informative_sites_vcf := $(output_vcf_dir)/arch_informative_sites_arch_freq_$(arch_freq).vcf.gz
 arch_informative_sites_tbi := $(output_vcf_dir)/arch_informative_sites_arch_freq_$(arch_freq).vcf.gz.tbi
@@ -118,6 +120,12 @@ $(nea_informative_sites_bed): $(raw_arch_informative_sites_bed)
 
 $(den_informative_sites_bed): $(raw_arch_informative_sites_bed)
 	awk '$$8 == 1' $< | cut -f1-5 >> $@
+
+$(private_nea_informative_sites_bed): $(raw_arch_informative_sites_bed)
+	awk '$$7 == 1 && $$8 == 0' $< | cut -f1-5 >> $@
+
+$(private_den_informative_sites_bed): $(raw_arch_informative_sites_bed)
+	awk '$$7 == 0 && $$8 == 1' $< | cut -f1-5 >> $@
 
 $(tmp_dir)/chr%.bed: $(bin)
 	chr_id=$(subst chr,,$(subst _arch_freq_$(arch_freq),,$(basename $(notdir $@)))); \
