@@ -113,19 +113,19 @@ $(raw_arch_informative_sites_bed): $(informative_sites_per_chr_bed) $(arch_infor
 	rm $@_tmp
 
 $(arch_informative_sites_bed): $(raw_arch_informative_sites_bed)
-	cut -f1-5 $< > $@
+	cut -f1-6 $< > $@
 
 $(nea_informative_sites_bed): $(raw_arch_informative_sites_bed)
-	awk '$$7 == 1' $< | cut -f1-5 >> $@
+	awk '$$7 == 1' $< | cut -f1-6 >> $@
 
 $(den_informative_sites_bed): $(raw_arch_informative_sites_bed)
-	awk '$$8 == 1' $< | cut -f1-5 >> $@
+	awk '$$8 == 1' $< | cut -f1-6 >> $@
 
 $(private_nea_informative_sites_bed): $(raw_arch_informative_sites_bed)
-	awk '$$7 == 1 && $$8 == 0' $< | cut -f1-5 >> $@
+	awk '$$7 == 1 && $$8 == 0' $< | cut -f1-6 >> $@
 
 $(private_den_informative_sites_bed): $(raw_arch_informative_sites_bed)
-	awk '$$7 == 0 && $$8 == 1' $< | cut -f1-5 >> $@
+	awk '$$7 == 0 && $$8 == 1' $< | cut -f1-6 >> $@
 
 $(tmp_dir)/chr%.bed: $(bin)
 	chr_id=$(subst chr,,$(subst _arch_freq_$(arch_freq),,$(basename $(notdir $@)))); \
