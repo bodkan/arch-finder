@@ -27,13 +27,14 @@ INCLUDES := -I$(LIBSTATGEN)/include
 LIBS := -L$(LIBSTATGEN) -lStatGen -lz
 
 hg1k_samples := $(input_dir)/1000genomes_samples.table
+all_samples := $(input_dir)/all_samples.list
 afr_samples := $(input_dir)/afr_samples.list
 non_afr_samples := $(input_dir)/non_afr_samples.list
 eur_samples := $(input_dir)/eur_samples.list
 eas_samples := $(input_dir)/eas_samples.list
 sas_samples := $(input_dir)/sas_samples.list
 amr_samples := $(input_dir)/amr_samples.list
-all_pops := $(afr_samples) $(yri_samples) $(non_afr_samples) $(eur_samples) $(eas_samples) $(sas_samples) $(amr_samples)
+all_pops := $(all_samples) $(afr_samples) $(yri_samples) $(non_afr_samples) $(eur_samples) $(eas_samples) $(sas_samples) $(amr_samples)
 
 bin := $(bin_dir)/find_informative_sites
 
@@ -86,7 +87,7 @@ $(arch_informative_sites_vcf): $(informative_sites_per_chr_vcf)
 $(output_vcf_dir)/%.vcf.gz.tbi: $(output_vcf_dir)/%.vcf.gz
 	tabix -f $<
 
-$(output_vcf_dir)/chr%.vcf.gz: $(tmp_dir)/chr%.bed $(non_afr_samples)
+$(output_vcf_dir)/chr%.vcf.gz: $(tmp_dir)/chr%.bed
 	chr_id=$(subst chr,,$(subst _arch_freq_$(arch_freq).vcf.gz,,$(notdir $@))); \
 	hg1k_vcf_file="$(hg1k_vcf_path)/ALL.chr$${chr_id}.*.vcf.gz"; \
 	bcftools norm --multiallelics +snps -R $< $${hg1k_vcf_file} \
@@ -148,6 +149,9 @@ $(LIBSTATGEN):
 $(hg1k_samples):
 	curl ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/integrated_call_samples_v3.20130502.ALL.panel \
 	    | tail -n+2 > $@
+
+$(all_samples): $(hg1k_samples)
+	cut -f1 $< > $@
 
 $(afr_samples): $(hg1k_samples)
 	grep -E "YRI|LWK|GWD|MSL|ESN" $< | cut -f1 > $@
