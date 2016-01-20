@@ -78,7 +78,7 @@ default:
 
 deps: $(directories) $(bin)
 
-scan: $(output_vcf_dir) $(output_bed_dir) $(arch_informative_sites_bed) $(nea_informative_sites_bed) $(den_informative_sites_bed) $(informative_sites_per_chr_vcf) $(informative_sites_per_chr_tbi) $(arch_informative_sites_vcf) $(arch_informative_sites_tbi)
+scan: $(output_vcf_dir) $(output_bed_dir) $(arch_informative_sites_bed) $(nea_informative_sites_bed) $(den_informative_sites_bed) $(private_nea_informative_sites_bed) $(private_den_informative_sites_bed) $(informative_sites_per_chr_vcf) $(informative_sites_per_chr_tbi) $(arch_informative_sites_vcf) $(arch_informative_sites_tbi)
 
 $(arch_informative_sites_vcf): $(informative_sites_per_chr_vcf)
 	bcftools concat $(informative_sites_per_chr_vcf) --output-type z --output $@
