@@ -154,7 +154,8 @@ $(all_samples): $(hg1k_samples)
 	cut -f1 $< > $@
 
 $(afr_samples): $(hg1k_samples)
-	grep -E "YRI|LWK|GWD|MSL|ESN" $< | cut -f1 > $@
+	grep -E "YRI" $< | cut -f1 > $@
+#	grep -E "YRI|LWK|GWD|MSL|ESN" $< | cut -f1 > $@
 
 $(non_afr_samples): $(hg1k_samples)
 	grep -v "AFR" $< | cut -f1 > $@
