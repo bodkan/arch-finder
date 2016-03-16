@@ -60,19 +60,19 @@ arch_informative_sites_tbi := $(output_vcf_dir)/arch_informative_sites_arch_freq
 
 default:
 	@echo "Usage:"
-	@echo "\tmake deps                 -- prepare depencies (binaries, directories etc.)"
+	@echo -e "\tmake deps                 -- prepare depencies (binaries, directories etc.)"
 	@echo
-	@echo "\tmake scan [arch_freq=0.0] -- scan the genome for archaic-like alleles allowing"
-	@echo "\t                             for a certain frequency of such alleles in Africa"
-	@echo "\t                             (no archaic-like alleles allowed by default)"
+	@echo -e "\tmake scan [arch_freq=0.0] -- scan the genome for archaic-like alleles allowing"
+	@echo -e "\t                             for a certain frequency of such alleles in Africa"
+	@echo -e "\t                             (no archaic-like alleles allowed by default)"
 	@echo
-	@echo "\tNote: adding the -jN argument to make will run N scans in parallel"
+	@echo -e "\tNote: adding the -jN argument to make will run N scans in parallel"
 	@echo
-	@echo "\tmake clean_deps           -- clean depencies"
-	@echo "\tmake clean_results        -- clean results"
-	@echo "\tmake clean_all            -- clean everything"
+	@echo -e "\tmake clean_deps           -- clean depencies"
+	@echo -e "\tmake clean_results        -- clean results"
+	@echo -e "\tmake clean_all            -- clean everything"
 	@echo
-	@echo "\tPaths to directories with 1000 genomes VCFs as well as Altai Neanderthal\n \
+	@echo -e "\tPaths to directories with 1000 genomes VCFs as well as Altai Neanderthal\n \
        and Denisovan VCFs have to be set using hg2k_vcf_path, altai_vcf_path\n \
        and denisovan_vcf_path variables (directly in the Makefile or when invoking\n \
        make)"
