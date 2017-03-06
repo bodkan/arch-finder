@@ -172,13 +172,13 @@ check_archaic_states(const std::string& vcf_filename,
 }
 
 //
-// Get a set of sites which at which Altai and Denisovan and Africans
+// Get a set of sites which at which Altai and Vindija and Africans
 // all differ from each other (i.e. triallelic sites that haven't been
 // detected earlier by pairwise comparisons).
 //
 std::set<int>
 get_triallelic_positions(std::map<int, std::pair<char, char>> & altai,
-                         std::map<int, std::pair<char, char>> & denisovan)
+                         std::map<int, std::pair<char, char>> & vindija)
 {
     std::set<int> triallelic_positions;
 
@@ -186,9 +186,9 @@ get_triallelic_positions(std::map<int, std::pair<char, char>> & altai,
     for (auto & altai_site : altai) {
       int pos = altai_site.first;
       char altai_allele = altai_site.second.second;
-      // ... and check if Denisovan (if also carries an informative allele)
+      // ... and check if Vindija (if also carries an informative allele)
       // has the same allele as Altai
-      if ((denisovan.count(pos) > 0) && (altai_allele != denisovan[pos].second))
+      if ((vindija.count(pos) > 0) && (altai_allele != vindija[pos].second))
           triallelic_positions.insert(pos);
     }
 
@@ -210,7 +210,7 @@ int
 main(int argc, char** argv)
 {
     if (argc != 6) {
-        std::cout << "Usage\n\t./find_informative_sites chr_ID 1000G_VCF Altai_VCF Denisovan_VCF arch_freq_cutoff\n";
+        std::cout << "Usage\n\t./find_informative_sites chr_ID 1000G_VCF Altai_VCF Vindija_VCF arch_freq_cutoff\n";
         return 0;
     }
 
@@ -218,37 +218,37 @@ main(int argc, char** argv)
 
     std::string hg1k_vcf_file(argv[2]);
     std::string altai_vcf_file(argv[3]);
-    std::string denisovan_vcf_file(argv[4]);
+    std::string vindija_vcf_file(argv[3]);
 
     float arch_freq_cutoff = std::atof(argv[5]);
 
     std::vector<std::pair<int, char>> fixed_sites = get_high_freq_afr_sites(hg1k_vcf_file, "input/afr_samples.list", arch_freq_cutoff);
     std::clog << "[Chromosome " << chr << "] Analysis of the 1000 genomes VCF file done (" << fixed_sites.size() << " sites)\n";
 
-    std::map<int, std::pair<char, char>> altai, denisovan;
+    std::map<int, std::pair<char, char>> altai, vindija;
 
     altai = check_archaic_states(altai_vcf_file, 0, fixed_sites);
     std::clog << "[Chromosome " << chr << "] Analysis of the Altai VCF file done (" << altai.size() << " sites)\n";
 
-    denisovan = check_archaic_states(denisovan_vcf_file, 0, fixed_sites);
-    std::clog << "[Chromosome " << chr << "] Analysis of the Denisovan VCF file done (" << denisovan.size() << " sites)\n";
+    vindija = check_archaic_states(vindija_vcf_file, 0, fixed_sites);
+    std::clog << "[Chromosome " << chr << "] Analysis of the Vindija VCF file done (" << vindija.size() << " sites)\n";
 
-    // get a set of sites at which Altai, Denisovan and Africans
+    // get a set of sites at which Altai, Vindija and Africans
     // all differ from each other
-    std::set<int> positions_to_remove = get_triallelic_positions(altai, denisovan);
+    std::set<int> positions_to_remove = get_triallelic_positions(altai, vindija);
 
     // remove such triallelic sites
     filter_out_triallelic(altai, positions_to_remove);
-    filter_out_triallelic(denisovan, positions_to_remove);
+    filter_out_triallelic(vindija, positions_to_remove);
 
     // initialize the table of final results
     std::map<int, std::tuple<char, char, bool, bool, bool, bool>> table;
     for (auto & site : altai) table.emplace(site.first, std::make_tuple(site.second.first, site.second.second, false, false, false, false));
-    for (auto & site : denisovan) table.emplace(site.first, std::make_tuple(site.second.first, site.second.second, false, false, false, false));
+    for (auto & site : vindija) table.emplace(site.first, std::make_tuple(site.second.first, site.second.second, false, false, false, false));
 
     // set boolean-flag at positions where an archaic differs from Africans
     for (auto & site : altai)     std::get<2>(table[site.first]) = true;
-    for (auto & site : denisovan) std::get<3>(table[site.first]) = true;
+    for (auto & site : vindija) std::get<3>(table[site.first]) = true;
 
     // print out the final table in a BED-like format
     for (auto & site : table) {

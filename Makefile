@@ -2,8 +2,8 @@ SHELL := /bin/bash
 
 # the following paths can be specified on the command line when invoking make
 hg1k_vcf_path := /mnt/sequencedb/1000Genomes/ftp/phase3/20140910
-altai_vcf_path := /mnt/454/HighCovNeandertalGenome/1_Extended_VCF/AltaiNea
-denisovan_vcf_path := /mnt/454/HighCovNeandertalGenome/1_Extended_VCF/DenisovaPinky
+altai_vcf_path := /mnt/scratch/steffi/D/Vcfs/Altai_Vindija_Denis
+vindija_vcf_path := /mnt/scratch/steffi/D/Vcfs/Altai_Vindija_Denis
 
 chromosomes := $(shell seq 1 22)
 arch_freq := 0.0
@@ -73,8 +73,8 @@ default:
 	@echo -e "\tmake clean_all            -- clean everything"
 	@echo
 	@echo -e "\tPaths to directories with 1000 genomes VCFs as well as Altai Neanderthal\n \
-       and Denisovan VCFs have to be set using hg2k_vcf_path, altai_vcf_path\n \
-       and denisovan_vcf_path variables (directly in the Makefile or when invoking\n \
+       and Vindija VCFs have to be set using hg2k_vcf_path, altai_vcf_path\n \
+       and vindija_vcf_path variables (directly in the Makefile or when invoking\n \
        make)"
 
 deps: $(directories) $(bin)
@@ -131,9 +131,9 @@ $(private_den_informative_sites_bed): $(raw_arch_informative_sites_bed)
 $(tmp_dir)/chr%.bed: $(bin)
 	chr_id=$(subst chr,,$(subst _arch_freq_$(arch_freq),,$(basename $(notdir $@)))); \
 	hg1k_vcf_file="$(hg1k_vcf_path)/ALL.chr$${chr_id}.*.vcf.gz"; \
-	altai_vcf_file="$(altai_vcf_path)/AltaiNea.hg19_1000g.$${chr_id}.mod.vcf.gz"; \
-	denisovan_vcf_file="$(denisovan_vcf_path)/DenisovaPinky.hg19_1000g.$${chr_id}.mod.vcf.gz"; \
-	$(bin) $${chr_id} $${hg1k_vcf_file} $${altai_vcf_file} $${denisovan_vcf_file} $(arch_freq) > $@
+	altai_vcf_file="$(altai_vcf_path)/altai_vindija_denis_chr$${chr_id}.vcf.gz"; \
+	vindija_vcf_file="$(vindija_vcf_path)/altai_vindija_denis_chr$${chr_id}.vcf.gz"; \
+	$(bin) $${chr_id} $${hg1k_vcf_file} $${altai_vcf_file} $${vindija_vcf_file} $(arch_freq) > $@
 
 $(bin): src/find_informative_sites.cpp $(all_pops) $(LIBSTATGEN)
 	$(CXX) $< -o $@ $(INCLUDES) $(LIBS) $(CXXFLAGS)
