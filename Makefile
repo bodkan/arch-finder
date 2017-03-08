@@ -72,9 +72,9 @@ default:
 
 deps: $(directories) $(bin)
 
-scan: $(output_dir) $(output_dir) $(informative_sites_bed) $(informative_sites_per_chr_vcf) $(informative_sites_per_chr_tbi) $(informative_sites_vcf) $(informative_sites_tbi)
+scan: $(directories) $(informative_sites_bed) $(informative_sites_vcf) $(informative_sites_tbi)
 
-$(informative_sites_vcf): $(informative_sites_per_chr_vcf)
+$(informative_sites_vcf): $(informative_sites_per_chr_vcf) $(informative_sites_per_chr_tbi)
 	bcftools concat $(informative_sites_per_chr_vcf) --output-type z --output $@
 
 $(output_dir)/%.vcf.gz.tbi: $(output_dir)/%.vcf.gz
