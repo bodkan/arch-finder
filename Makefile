@@ -56,7 +56,7 @@ default:
 	@echo "Usage:"
 	@echo -e "\tmake deps                 -- prepare depencies (binaries, directories etc.)"
 	@echo
-	@echo -e "\tmake scan [nea_freq=0.0] -- scan the genome for archaic-like alleles allowing"
+	@echo -e "\tmake scan [nea_freq=0.0]  -- scan the genome for archaic-like alleles allowing"
 	@echo -e "\t                             for a certain frequency of such alleles in Africa"
 	@echo -e "\t                             (no archaic-like alleles allowed by default)"
 	@echo
@@ -67,9 +67,9 @@ default:
 	@echo -e "\tmake clean_all            -- clean everything"
 	@echo
 	@echo -e "\tPaths to directories with 1000 genomes VCFs as well as Altai Neandertal\n \
-       and Vindija Neandertal VCFs have to be set using hg2k_vcf_path, altai_vcf_path\n \
+       and Vindija Neandertal VCFs have to be set using hg1k_vcf_path, altai_vcf_path\n \
        and vinija_vcf_path variables (directly in the Makefile or when invoking\n \
-       make)"
+       make on the command-line)"
 
 deps: $(directories) $(bin)
 
