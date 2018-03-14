@@ -50,7 +50,7 @@ informative_sites_tbi := $(output_vcf_dir)/informative_sites_nea_freq_$(nea_freq
 
 .PHONY: clean scratch
 
-.INTERMEDIATE: $(informative_sites_per_chr_bed)
+#.INTERMEDIATE: $(informative_sites_per_chr_bed)
 
 default:
 	@echo "Usage:"
@@ -82,15 +82,12 @@ $(output_vcf_dir)/%.vcf.gz.tbi: $(output_vcf_dir)/%.vcf.gz
 	tabix -f $<
 
 $(output_vcf_dir)/chr%.vcf.gz: $(tmp_dir)/chr%.bed
-	echo -e "\n\n\n#$(notdir $@)#\n\n\n"; \
 	chr_id=$(subst chr,,$(subst _nea_freq_$(nea_freq).vcf.gz,,$(notdir $@))); \
-	echo -e "\n\n\n#$${chr_id}#\n\n\n"; \
 	hg1k_vcf_file="$(hg1k_vcf_path)/ALL.chr$${chr_id}.*.vcf.gz"; \
-	echo -e "\n\n\n#$${hg1k_vcf_file}#\n\n\n"; \
 	bcftools norm --multiallelics +snps -R $< $${hg1k_vcf_file} \
 	     | bcftools view -M2 -v snps \
 	     | bgzip \
-	     > $@
+	     > $@; \
 	# the following hack solves the problem of multiallelic sites
 	# being sometimes represented by multiple monoallelic records
 	# in the 1000 genomes VCF files -- bcftools norm command above
@@ -105,7 +102,7 @@ $(output_vcf_dir)/chr%.vcf.gz: $(tmp_dir)/chr%.bed
 $(informative_sites_bed): $(informative_sites_per_chr_bed) $(informative_sites_vcf)
 	cat $(informative_sites_per_chr_bed) > $@_tmp; \
 	# add a column with a reference allele to the final BED file:
-	paste $@_tmp <(bcftools view -H $(nea_informative_sites_vcf) | cut -f4) \
+	paste $@_tmp <(bcftools view -H $(informative_sites_vcf) | cut -f4) \
 		| awk -v OFS="\t" '{ print $$1, $$2, $$3, $$8, $$4, $$5, $$6, $$7 }' \
 		> $@; \
 	rm $@_tmp
