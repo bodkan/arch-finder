@@ -2,11 +2,12 @@
 
 The program `find_informative_sites` will scan the 1000 Genomes
 Project VCF files and look for sites that are informative of
-Neanderthal or Denisovan ancestry. Specifically, it will look for
-sites where:
+Neanderthal ancestry. Specifically, it will look for sites at
+which:
 
-* Africans in 1000 Genomes Project data are fixed for a certain allele
-* Altai Neanderthal or Denisovan individuals are homozygous for an
-  allele that is different from the one seen in Africans
+* Yoruba individuals in the 1000 Genomes Project data are fixed for
+  a certain allele
+* Altai and Vindija high-coverage Neandertal genomes homozygous for an
+  allele that is different from the one seen in Yoruba.
 
 Usage: run `make` and follow the instructions.
