@@ -158,7 +158,7 @@ clean_deps:
 	rm -rf $(bin_dir) $(lib_dir) $(tmp_dir) $(input_dir)
 
 clean_results:
-	rm -rf $(output_bed_dir) $(output_vcf_dir)
+	rm -rf $(output_bed_dir) $(output_vcf_dir) $(tmp_dir)
 
 clean_all:
 	rm -rf $(directories)
