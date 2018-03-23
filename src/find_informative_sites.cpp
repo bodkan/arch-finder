@@ -252,16 +252,11 @@ main(int argc, char** argv)
 
     // print out the final table in a BED-like format
     for (auto & site : table) {
-        char altai_state = std::get<2>(site.second);
-        char vindija_state = std::get<3>(site.second);
-
-        if (altai_state != 1 || vindija_state != 1) continue;
-
         std::cout << chr << "\t" << site.first - 1 << "\t" << site.first << "\t"
             << std::get<0>(site.second) << "\t"
             << std::get<1>(site.second) << "\t"
-            << altai_state << "\t"
-            << vindija_state << "\n";
+            << std::get<2>(site.second) << "\t"
+            << std::get<3>(site.second) << "\n";
     }
     std::clog << "[Chromosome " << chr << "] Printing out the results done " <<
         "(" << table.size() << " sites in total)\n";
