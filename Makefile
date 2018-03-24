@@ -112,7 +112,9 @@ $(tmp_dir)/chr%.bed: $(bin)
 	hg1k_vcf_file="$(hg1k_vcf_path)/ALL.chr$${chr_id}.*.vcf.gz"; \
 	altai_vcf_file="$(altai_vcf_path)/chr$${chr_id}_mq25_mapab100.vcf.gz"; \
 	vindija_vcf_file="$(vindija_vcf_path)/chr$${chr_id}_mq25_mapab100.vcf.gz"; \
-	$(bin) $${chr_id} $${hg1k_vcf_file} $${altai_vcf_file} $${vindija_vcf_file} $(nea_freq) > $@
+	$(bin) $${chr_id} $${hg1k_vcf_file} $${altai_vcf_file} $${vindija_vcf_file} $(nea_freq) \
+	    | awk '$$6 == 1 && $$7 == 1' \
+		> $@
 
 $(bin): src/find_informative_sites.cpp $(all_pops) $(LIBSTATGEN)
 	$(CXX) $< -o $@ $(INCLUDES) $(LIBS) $(CXXFLAGS)
