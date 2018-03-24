@@ -48,6 +48,8 @@ informative_sites_bed := $(output_bed_dir)/informative_sites_nea_freq_$(nea_freq
 informative_sites_vcf := $(output_vcf_dir)/informative_sites_nea_freq_$(nea_freq).vcf.gz
 informative_sites_tbi := $(output_vcf_dir)/informative_sites_nea_freq_$(nea_freq).vcf.gz.tbi
 
+hg1k_freqs_bed := $(output_bed_dir)/informative_sites_hg1k_freqs.bed
+
 .PHONY: clean scratch
 
 #.INTERMEDIATE: $(informative_sites_per_chr_bed)
@@ -73,7 +75,12 @@ default:
 
 deps: $(directories) $(bin)
 
-scan: $(output_vcf_dir) $(output_bed_dir) $(informative_sites_bed) $(informative_sites_per_chr_vcf) $(informative_sites_per_chr_tbi) $(informative_sites_vcf) $(informative_sites_tbi)
+scan: $(output_vcf_dir) $(output_bed_dir) $(hg1k_freqs_bed) $(informative_sites_bed) $(informative_sites_per_chr_vcf) $(informative_sites_per_chr_tbi) $(informative_sites_vcf) $(informative_sites_tbi)
+
+$(hg1k_freqs_bed): $(informative_sites_vcf)
+	printf "chrom\tstart\tend\teur_af\teas_af\tsas_af\tamr_af\n" > $@; \
+	bcftools query -f '%CHROM\t%POS\t%REF\t%ALT\t%INFO/EUR_AF\t%INFO/EAS_AF\t%INFO/SAS_AF\t%INFO/AMR_AF\n' $< \
+	>> $@
 
 $(informative_sites_vcf): $(informative_sites_per_chr_vcf)
 	bcftools concat $(informative_sites_per_chr_vcf) --output-type z --output $@
