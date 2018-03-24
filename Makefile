@@ -111,6 +111,7 @@ $(informative_sites_bed): $(informative_sites_per_chr_bed) $(informative_sites_v
 	# add a column with a reference allele to the final BED file:
 	paste $@_tmp <(bcftools view -H $(informative_sites_vcf) | cut -f4) \
 		| awk -v OFS="\t" '{ print $$1, $$2, $$3, $$8, $$4, $$5, $$6, $$7 }' \
+		| awk '$$4 != $$6' \
 		> $@; \
 	rm $@_tmp
 
