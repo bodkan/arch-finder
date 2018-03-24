@@ -79,7 +79,7 @@ scan: $(output_vcf_dir) $(output_bed_dir) $(hg1k_freqs_bed) $(informative_sites_
 
 $(hg1k_freqs_bed): $(informative_sites_vcf)
 	printf "chrom\tstart\tend\teur_af\teas_af\tsas_af\tamr_af\n" > $@; \
-	bcftools query -f '%CHROM\t%POS\t%REF\t%ALT\t%INFO/EUR_AF\t%INFO/EAS_AF\t%INFO/SAS_AF\t%INFO/AMR_AF\n' $< \
+	bcftools query -f '%CHROM\t%POS0\t%END\t%INFO/EUR_AF\t%INFO/EAS_AF\t%INFO/SAS_AF\t%INFO/AMR_AF\n' $< \
 	>> $@
 
 $(informative_sites_vcf): $(informative_sites_per_chr_vcf)
