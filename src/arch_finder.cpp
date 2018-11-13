@@ -61,10 +61,12 @@ int main(int argc, char* argv[])
     std::vector<std::string> args(argv, argv + argc);
 
     // find positions of command-line arguments
-    int vcf_cli = 0, arch_cli = 0, afr_cli = 0;
+    int vcf_cli = 0, bed_cli = 0, arch_cli = 0, afr_cli = 0;
     for (int i = 0; i < argc; i++) {
         if (args[i] == "--vcf") {
             vcf_cli = i + 1;
+        } else if (args[i] == "--bed") {
+            bed_cli = i + 1;
         } else if (args[i] == "--archaics") {
             arch_cli = i + 1;
         } else if (args[i] == "--africans") {
@@ -75,16 +77,18 @@ int main(int argc, char* argv[])
 
     // extract path to VCF and list of archaic and African individual names
     std::string vcf_path(args[vcf_cli]);
+    std::string bed_path(args[bed_cli]);
     std::vector<std::string> archaics, africans;
     for (int i = arch_cli; i < afr_cli - 1; i++) archaics.push_back(args[i]);
     for (int i = afr_cli; i < argc; i++) africans.push_back(args[i]);
 
-    if (!vcf_cli || !archaics.size() || !africans.size()) {
+    if (!vcf_cli || !bed_cli || !archaics.size() || !africans.size()) {
         std::cerr << "Usage:\n\t./arch-finder --vcf <path to VCF> --archaics <archaic samples> --africans <African samples>\n\n\tArguments must be provided in the specified order.";
         return 0;
     }
 
     /* std::cout << vcf_path << "\n"; */
+    /* std::cout << bed_path << "\n"; */
     /* for (auto x : archaics) std::cout << x << "\n"; */
     /* for (auto x : africans) std::cout << x << "\n"; */
 
@@ -164,8 +168,11 @@ int main(int argc, char* argv[])
     }
 
     // write coordinates
-    for (const auto & pos : positions)
-        std::cout << pos.first << "\t" << pos.second - 1 << "\t" << pos.second << "\n";
+    std::ofstream bed(bed_path);
+    for (const auto & pos : positions) {
+        bed << pos.first << "\t" << pos.second - 1 << "\t" << pos.second << "\n";
+    }
+    bed.close();
 
     return 0;
 }
