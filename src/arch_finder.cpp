@@ -1,7 +1,6 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
-#include <regex>
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
 
@@ -19,26 +18,41 @@ std::vector<std::string> split_line(std::string& line)
 }
 
 
+/* // Convert genotypes from a VCF format into an EIGENSTRAT format by applying */
+/* // a series of regex substitutions on each line as a whole. */
+/* int convert_gt(const std::string& s) */
+/* { */
+/*     std::string converted(s); */
+
+/*     converted = std::regex_replace(converted, std::regex("0\\|0"),     "0"); */
+/*     converted = std::regex_replace(converted, std::regex("0/0"),       "0"); */
+
+/*     converted = std::regex_replace(converted, std::regex("0\\|1"),     "1"); */
+/*     converted = std::regex_replace(converted, std::regex("1\\|0"),     "1"); */
+/*     converted = std::regex_replace(converted, std::regex("0/1"),       "1"); */
+/*     converted = std::regex_replace(converted, std::regex("1/0"),       "1"); */
+
+/*     converted = std::regex_replace(converted, std::regex("1\\|1"),     "2"); */
+/*     converted = std::regex_replace(converted, std::regex("1/1"),       "2"); */
+
+/*     return std::stoi(converted); */
+/* } */
+
 // Convert genotypes from a VCF format into an EIGENSTRAT format by applying
 // a series of regex substitutions on each line as a whole.
 int convert_gt(const std::string& s)
 {
-    std::string converted(s);
+    if      (s == "0|0") { return 2; }
+    else if (s == "0/0") { return 2; }
 
-    converted = std::regex_replace(converted, std::regex("0\\|0"),     "0");
-    converted = std::regex_replace(converted, std::regex("0/0"),       "0");
+    else if (s == "0|1") { return 1; }
+    else if (s == "1|0") { return 1; }
+    else if (s == "0/1") { return 1; }
+    else if (s == "1/0") { return 1; }
 
-    converted = std::regex_replace(converted, std::regex("0\\|1"),     "1");
-    converted = std::regex_replace(converted, std::regex("1\\|0"),     "1");
-    converted = std::regex_replace(converted, std::regex("0/1"),       "1");
-    converted = std::regex_replace(converted, std::regex("1/0"),       "1");
-
-    converted = std::regex_replace(converted, std::regex("1\\|1"),     "2");
-    converted = std::regex_replace(converted, std::regex("1/1"),       "2");
-
-    return std::stoi(converted);
+    else if (s == "1|1") { return 0; }
+    else                 { return 0; } // (s == "1/1")
 }
-
 
 
 int main(int argc, char* argv[])
@@ -121,9 +135,11 @@ int main(int argc, char* argv[])
     /* for (int i : arch_pos) std::cout << i << "\n"; */
     /* for (int i : afr_pos) std::cout << i << "\n"; */
 
-    std::vector<std::pair<std::string, long>> positions;
     // process the genotype part of the VCF
-    while (std::getline(*vcf_file, line)) {
+    std::vector<std::pair<std::string, long>> positions;
+    for (long i = 0; std::getline(*vcf_file, line); i++) {
+        if (i % 10000 == 1) std::cout << i << " sites processed\r" << std::flush;
+
         auto elems = split_line(line);
 
         // keep only biallelic SNPs
