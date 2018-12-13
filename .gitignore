@@ -1,10 +1,4 @@
-bin/
-input/
-lib/
-output_bed/
-output_vcf/
-tmp/
-src/scratch.cpp
-
-*.swp
-\#*#
+bin
+input
+output
+tmp
