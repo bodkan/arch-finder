@@ -3,7 +3,7 @@ AFR := YRI
 dirs := bin input output tmp
 
 arch_finder := ./bin/arch_finder
-sample_info := input/sample_info.tsv
+sample_info := input/sample_info.csv
 info_sites := output/info_sites_$(AFR).bed
 
 default:
