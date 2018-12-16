@@ -4,7 +4,8 @@ dirs := bin input output tmp
 
 arch_finder := ./bin/arch_finder
 sample_info := input/sample_info.csv
-info_sites := output/info_sites_$(AFR).bed
+info_sitesCpp := output/info_sites_$(AFR)_Cpp.bed
+info_sitesR := output/info_sites_$(AFR)_R.bed
 
 default:
 	@echo "Usage:"
@@ -12,10 +13,13 @@ default:
 	@echo
 	@echo "Note: adding the -jN will run N scans in parallel, one for each chromosome.\n"
 
-scan: $(info_sites)
+scan: $(info_sitesCpp) $(info_sitesR)
 
-$(info_sites): $(addsuffix .bed,$(addprefix tmp/, $(addprefix info_sites_chr,$(shell seq 1 22))))
+$(info_sitesCpp): $(addsuffix .bed,$(addprefix tmp/, $(addprefix info_sites_chr,$(shell seq 1 22))))
 	cat $^ > $@
+
+$(info_sitesR):
+	./src/arch_finder.R $(AFR) 0.0 $@
 
 tmp/info_sites_chr%.bed: /mnt/sequencedb/gendivdata/2_genotypes/giantVcfs/merged_var_nosing_sites_arch_apes_sgdp1_g1000_chr%.vcf.gz $(dirs) $(sample_info) $(arch_finder)
 	$(arch_finder) \
