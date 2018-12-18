@@ -20,7 +20,7 @@ $(info_sitesCpp): $(addsuffix .bed,$(addprefix tmp/, $(addprefix info_sites_chr,
 
 $(info_sitesR):
 	./src/arch_finder.R $(AFR) 0.0 $@
-	perl -i -lane 'print $$F[0] . "\t" . ($$F[1] - 1) . "\t" . $$F[1]' $@
+	# perl -i -lane 'print $$F[0] . "\t" . ($$F[1] - 1) . "\t" . $$F[1]' $@
 
 tmp/info_sites_chr%.bed: /mnt/sequencedb/gendivdata/2_genotypes/giantVcfs/merged_var_nosing_sites_arch_apes_sgdp1_g1000_chr%.vcf.gz $(dirs) $(sample_info) $(arch_finder)
 	$(arch_finder) \

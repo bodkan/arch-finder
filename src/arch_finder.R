@@ -43,5 +43,5 @@ for (chr in 1:22) {
     all_sites[[afr_pop]] <= afr_cutoff
   ]
 
-  fwrite(info_sites, output_file, append = TRUE, sep = "\t", col.names = FALSE)
+  fwrite(info_sites, output_file, append = TRUE, sep = "\t")
 }
