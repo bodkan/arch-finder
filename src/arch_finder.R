@@ -26,10 +26,10 @@ if (! afr_pop %in% pops)
   stop("Specified African population missing in the frequency table")
 
 for (chr in 1:22) {
-  vcf_path <- glue("/mnt/sequencedb/gendivdata/4_processed/ALT_freqs_from_merged_VCF/af_high_sgdp_g1000_apes/freq_var_chr{chr}.tab.gz")
+  table_path <- glue("/mnt/sequencedb/gendivdata/4_processed/ALT_freqs_from_merged_VCF/af_high_sgdp_g1000_apes/freq_var_chr{chr}.tab.gz")
 
   all_sites <-
-    fread(vcf_path, na.strings = ".") %>%
+    fread(table_path, na.strings = ".") %>%
     select(
       chrom=`#CHROM`, pos=POS,
       one_of(outgroups), one_of(archaics),
