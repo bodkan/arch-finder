@@ -1,0 +1,2 @@
+**This repository contains code (originally written in C++, later rewritten to pure R) to scan for "archaic ancestry informative SNPs" in 1000 Genomes Project data. It has been used throughout several projects during my PhD at the Max Planck Institute for Evolutionary Anthropology in Leipzig.
+It is now archived, mostly as a historical artifact. If you are looking for a similar data set for your introgression study, I recommend looking for an up-to-date pipeline which uses much more data available today.**
